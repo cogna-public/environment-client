@@ -1,14 +1,14 @@
-# Environment Client
+# Environment Client 🌿
 
-A Python client for the environment.data.gov.uk APIs.
+A Python client for the environment.data.gov.uk APIs. Fast, typed, and async‑friendly. 🌟
 
-## Installation
+## Installation 🧰
 
 ```bash
 uv pip install environment-client
 ```
 
-## Usage
+## Usage 🐍
 
 ```python
 import asyncio
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Supported APIs
+## Supported APIs 🌐
 
 - Real-time Flood Monitoring (flood warnings, areas, stations, measures, readings)
 - Bathing Waters
@@ -37,7 +37,7 @@ if __name__ == "__main__":
 - Rainfall
 - Water Quality Data Archive (WQA)
 
-### Important: WQA API Replacement
+### ⚠️ Important: WQA API Replacement
 
 Note: The Water Quality Archive (WQA) APIs will be replaced later this year, meaning that the existing APIs will no longer work after Spring/Summer 2025. As of now, many `water-quality/view` endpoints return HTTP 404. We’ve:
 
@@ -47,7 +47,7 @@ Note: The Water Quality Archive (WQA) APIs will be replaced later this year, mea
 For updates, see DEFRA’s support pages:
 https://environment.data.gov.uk/apiportal/support
 
-## Implementation Status
+## Implementation Status 📊
 
 - Flood Monitoring
   - Base: `https://environment.data.gov.uk/flood-monitoring`
@@ -84,19 +84,29 @@ https://environment.data.gov.uk/apiportal/support
   - Base: `https://environment.data.gov.uk/water-quality/view`
   - Status: Being replaced by DEFRA; many endpoints currently return HTTP 404. Client issues a `DeprecationWarning`. Tests are skipped until the replacement API is available.
 
-## Testing & VCR
+## Testing & VCR 🧪
 
 - Tests are recorded/replayed with `pytest-vcr` (record mode: once).
 - Cassettes are stored under `tests/cassettes/` with per-module subfolders (e.g., `rainfall/`, `hydrology/`, `tide_gauge/`, `integration/`).
 - To re-record a cassette, delete the corresponding YAML file and re-run the specific test.
 - Integration tests also use VCR to avoid live network dependency.
 
-## Development
+## Development 🛠️
+
+Contributing? See AGENTS.md for full repository guidelines (structure, style, testing, and PR conventions).
 
 This project uses `uv` for dependency management.
 
-- Install dependencies: `uv sync`
+- Install dependencies: `uv sync` or `just install`
 - Run tests: `just test`
 - Run integration tests: `just test-integration`
-- Lint: `just lint`
+- Lint (fix): `just lint`
 - Format: `just format`
+- Example script: `just run-main`
+
+## Contributing 🤝
+
+- Start with AGENTS.md for repository structure, coding style, testing, and PR conventions.
+- Open an issue for larger changes; link issues in PRs.
+- Follow commit prefixes (e.g., `feat:`, `fix:`, `docs:`) and keep messages concise.
+- Run `just lint`, `just format`, and `just test` before pushing. Update or re-record VCR cassettes when tests change network interactions.
