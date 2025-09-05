@@ -91,7 +91,9 @@ class FloodClient(httpx.AsyncClient):
         Returns:
             list[FloodArea]: A list of flood areas.
         """
-        response = await self.get("/id/flood-areas", params=params)
+        # Flood areas are identifiable resources under the /id namespace
+        # See: https://environment.data.gov.uk/flood-monitoring/doc/reference#flood-areas
+        response = await self.get("/id/floodAreas", params=params)
         response.raise_for_status()
         return [FloodArea(**item) for item in response.json()["items"]]
 
@@ -105,7 +107,8 @@ class FloodClient(httpx.AsyncClient):
         Returns:
             FloodArea: Details of the flood area.
         """
-        response = await self.get(f"/id/flood-areas/{area_id}")
+        # Flood area details endpoint follows the same /id/floodAreas pattern
+        response = await self.get(f"/id/floodAreas/{area_id}")
         response.raise_for_status()
         return FloodArea(**response.json()["items"][0])
 
