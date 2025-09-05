@@ -11,9 +11,8 @@ async def log_request(request):
 
 
 async def log_response(response):
-    await response.aread()
+    # Avoid pre-reading body so VCR can capture content
     print(f"<<< Response: {response.status_code}")
-    print(response.text)
 
 
 class HydrologyClient(httpx.AsyncClient):
@@ -31,7 +30,7 @@ class HydrologyClient(httpx.AsyncClient):
             **kwargs: Additional keyword arguments to pass to the httpx.AsyncClient constructor.
         """
         super().__init__(
-            base_url="http://environment.data.gov.uk/hydrology",
+            base_url="https://environment.data.gov.uk/hydrology",
             timeout=timeout,
             **kwargs,
         )
@@ -48,7 +47,19 @@ class HydrologyClient(httpx.AsyncClient):
         """
         response = await self.get("/id/stations", params=params)
         response.raise_for_status()
-        return [Station(**item) for item in response.json()["items"]]
+        items = response.json()["items"]
+        normalised = []
+        for item in items:
+            data = dict(item)
+            if isinstance(data.get("status"), list) and data["status"]:
+                first = data["status"][0]
+                if isinstance(first, dict):
+                    data["status"] = first.get("label") or first.get("@id")
+            if isinstance(data.get("riverName"), list) and data["riverName"]:
+                # Prefer the first provided river name
+                data["riverName"] = data["riverName"][0]
+            normalised.append(data)
+        return [Station(**data) for data in normalised]
 
     async def get_station_by_id(self, station_id: str) -> Station:
         """
@@ -62,7 +73,14 @@ class HydrologyClient(httpx.AsyncClient):
         """
         response = await self.get(f"/id/stations/{station_id}")
         response.raise_for_status()
-        return Station(**response.json()["items"][0])
+        data = response.json()["items"]
+        if isinstance(data, list):
+            data = data[0]
+        if isinstance(data.get("status"), list) and data["status"]:
+            first = data["status"][0]
+            if isinstance(first, dict):
+                data["status"] = first.get("label") or first.get("@id")
+        return Station(**data)
 
     async def get_measures(self, **params) -> list[Measure]:
         """
@@ -73,7 +91,16 @@ class HydrologyClient(httpx.AsyncClient):
         """
         response = await self.get("/id/measures", params=params)
         response.raise_for_status()
-        return [Measure(**item) for item in response.json()["items"]]
+        items = response.json()["items"]
+        normalised = []
+        for item in items:
+            data = dict(item)
+            if isinstance(data.get("station"), dict):
+                data["station"] = data["station"].get("@id")
+            if isinstance(data.get("unit"), dict):
+                data["unit"] = data["unit"].get("@id")
+            normalised.append(data)
+        return [Measure(**data) for data in normalised]
 
     async def get_measure_by_id(self, measure_id: str) -> Measure:
         """
@@ -87,18 +114,39 @@ class HydrologyClient(httpx.AsyncClient):
         """
         response = await self.get(f"/id/measures/{measure_id}")
         response.raise_for_status()
-        return Measure(**response.json()["items"][0])
+        data = response.json()["items"]
+        if isinstance(data, list):
+            data = data[0]
+        if isinstance(data.get("station"), dict):
+            data["station"] = data["station"].get("@id")
+        if isinstance(data.get("unit"), dict):
+            data["unit"] = data["unit"].get("@id")
+        return Measure(**data)
 
-    async def get_readings(self, **params) -> list[Reading]:
+    async def get_readings(self, measure_id: str | None = None, **params) -> list[Reading]:
         """
         Returns a list of readings.
 
         Returns:
             list[Reading]: A list of readings.
         """
-        response = await self.get("/id/readings", params=params)
+        # Hydrology readings are exposed per-measure
+        if not measure_id:
+            # Fallback: fetch the first measure and use it
+            measures = await self.get_measures(_limit=1)
+            if not measures:
+                return []
+            measure_id = measures[0].id.split("/")[-1]
+        response = await self.get(f"/id/measures/{measure_id}/readings", params=params)
         response.raise_for_status()
-        return [Reading(**item) for item in response.json()["items"]]
+        items = response.json()["items"]
+        normalised = []
+        for item in items:
+            data = dict(item)
+            if isinstance(data.get("measure"), dict):
+                data["measure"] = data["measure"].get("@id")
+            normalised.append(data)
+        return [Reading(**data) for data in normalised]
 
     async def get_reading_by_id(self, reading_id: str) -> Reading:
         """
@@ -112,4 +160,7 @@ class HydrologyClient(httpx.AsyncClient):
         """
         response = await self.get(f"/id/readings/{reading_id}")
         response.raise_for_status()
-        return Reading(**response.json()["items"][0])
+        data = response.json()["items"]
+        if isinstance(data, list):
+            data = data[0]
+        return Reading(**data)

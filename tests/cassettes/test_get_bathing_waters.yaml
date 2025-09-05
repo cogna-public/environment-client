@@ -1,0 +1,105 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - environment.data.gov.uk
+      user-agent:
+      - python-httpx/0.28.1
+    method: GET
+    uri: https://environment.data.gov.uk/doc/bathing-water.json
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Location:
+      - https://environment.data.gov.uk/doc/bathing-water.json
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Sep 2025 15:41:27 GMT
+      ETag:
+      - W/"f4c89424514a46b7"
+      Expires:
+      - Fri, 05 Sep 2025 15:44:26 GMT
+      Server:
+      - openresty/1.25.3.2
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      X-Response-Id:
+      - host 10.17.65.227:300097
+    status:
+      code: 200
+      message: ''
+version: 1

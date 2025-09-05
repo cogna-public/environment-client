@@ -11,9 +11,8 @@ async def log_request(request):
 
 
 async def log_response(response):
-    await response.aread()
+    # Avoid pre-reading body so VCR can capture content
     print(f"<<< Response: {response.status_code}")
-    print(response.text)
 
 
 class TideGaugeClient(httpx.AsyncClient):
@@ -46,7 +45,8 @@ class TideGaugeClient(httpx.AsyncClient):
         Returns:
             list[TideGaugeStation]: A list of tide gauge stations.
         """
-        response = await self.get("/id/tide-gauge-stations", params=params)
+        params = {"type": "TideGauge", **params}
+        response = await self.get("/id/stations", params=params)
         response.raise_for_status()
         return [TideGaugeStation(**item) for item in response.json()["items"]]
 
@@ -60,9 +60,14 @@ class TideGaugeClient(httpx.AsyncClient):
         Returns:
             TideGaugeStation: Details of the tide gauge station.
         """
-        response = await self.get(f"/id/tide-gauge-stations/{station_id}")
+        response = await self.get(f"/id/stations/{station_id}")
         response.raise_for_status()
-        return TideGaugeStation(**response.json()["items"][0])
+        data = response.json()["items"]
+        if isinstance(data, list):
+            data = data[0]
+        if isinstance(data.get("measures"), dict):
+            data["measures"] = [data["measures"]]
+        return TideGaugeStation(**data)
 
     async def get_tide_gauge_readings(self, **params) -> list[TideGaugeReading]:
         """
@@ -71,9 +76,17 @@ class TideGaugeClient(httpx.AsyncClient):
         Returns:
             list[TideGaugeReading]: A list of tide gauge readings.
         """
-        response = await self.get("/id/tide-gauge-readings", params=params)
+        params = {"stationType": "TideGauge", **params}
+        response = await self.get("/data/readings", params=params)
         response.raise_for_status()
-        return [TideGaugeReading(**item) for item in response.json()["items"]]
+        items = response.json()["items"]
+        normalised = []
+        for item in items:
+            data = dict(item)
+            if isinstance(data.get("measure"), dict):
+                data["measure"] = data["measure"].get("@id")
+            normalised.append(data)
+        return [TideGaugeReading(**data) for data in normalised]
 
     async def get_tide_gauge_reading_by_id(self, reading_id: str) -> TideGaugeReading:
         """
@@ -85,6 +98,11 @@ class TideGaugeClient(httpx.AsyncClient):
         Returns:
             TideGaugeReading: Details of the tide gauge reading.
         """
-        response = await self.get(f"/id/tide-gauge-readings/{reading_id}")
+        response = await self.get(f"/data/readings/{reading_id}")
         response.raise_for_status()
-        return TideGaugeReading(**response.json()["items"][0])
+        data = response.json()["items"]
+        if isinstance(data, list):
+            data = data[0]
+        if isinstance(data.get("measure"), dict):
+            data["measure"] = data["measure"].get("@id")
+        return TideGaugeReading(**data)

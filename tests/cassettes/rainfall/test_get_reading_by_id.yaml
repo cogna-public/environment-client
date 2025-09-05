@@ -1,0 +1,113 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - environment.data.gov.uk
+      user-agent:
+      - python-httpx/0.28.1
+    method: GET
+    uri: https://environment.data.gov.uk/flood-monitoring/data/readings?parameter=rainfall&_limit=1
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA7VUTU/cMBC976+wcugJx15QBERCpZXoHyinIrTyJrOJiz8ie5KlQvx3xt7dsFwq
+        WsTRk/F7b+Y954ktGCuuG+8QHrFgNSt6xKEWAtykg3cWHJatQlV2firHB7Ex3rfceqfRB+06YQGV
+        2AOUv6N3pi3YSYJNXxLkUyKh8zCujY49hMxz80rAvnXgmj+7a9RodENnOJaz3W5Lp1B7p4wKTa8n
+        iAdJrW+EH8BxkgghS+Z7CEGFSJfEmZjRqX1MY2W0Y453j5wIA2wg7FSmYUn1niojyvJy5mu8TXS5
+        /pNYx1iz77QaFiFMNOnc2Kv4wwercuvdvzuRbCJdqiVbYtnE6euggiIXIFwFpd1GGfNlZbTVeLUs
+        Tj5KENrN5xIgms8l6NH+nYHd5yTnSNLWkoVLMvs5GZ4jrhFsTOW7OeXXmvJff3C54uZcVpIfXOOo
+        h4FcXa3H5gFwleqdGjvgyJfVymrHrRWn8rTi8oLL81tZUZ1L+WsOF4UDbrXdPao3nfWyqo87Lag4
+        hjev790vQ7f0P8jX4/+MMKudlBmzAlnKw8LvF8+LxQvMt5l/sQQAAA==
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Age:
+      - '0'
+      Cache-Control:
+      - no-transform, max-age=300
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Sep 2025 16:21:19 GMT
+      Last-Modified:
+      - Fri, 05 Sep 2025 16:18:22 GMT
+      Server:
+      - openresty/1.25.3.2
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - environment.data.gov.uk
+      user-agent:
+      - python-httpx/0.28.1
+    method: GET
+    uri: https://environment.data.gov.uk/flood-monitoring/data/readings/E7050-rainfall-tipping_bucket_raingauge-t-15_min-mm/2025-08-07T05-15-00Z
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA81VPW/bMBDd/SsIdQ1FOoWQ2lMaIN3SwfXUIjBoiZLZ8EMhKblBkP/eIyVLStuh
+        FlA0o8jTu3d37x6f0QKh5Do32vMfPkFrlBy8r9eEcN0Ka7Ti2qcF8yytTJs2D6SUxhRYGS28sUJX
+        RHHPSA+QfndGyyJBFwE23ATI55AEvutmL4U7cBvz3I4J0MeK6/yp+w0Cpcjhm0/pHI/HVDMvjGaS
+        2fwgWu5OlAqTE1NzjYEit5Ey7iEIHDj4ibwnAzqEN6GsiDbN8dclh4SWl9x2LEOxwLpPFRFpuhry
+        5UaFdPH8C2Rt3BrdQGuQ47aFSofAA3OfjFUshn47fxJhTMCLFTAWR26vaEaxZUKXTErsRV3D+W7f
+        5A/c78J5xZqKY4+X2U4JjZUil/Qyw/QDpldbmsE5pvRraosyuXgzbLyXb4jNwSuZoHsQwEsQQZS9
+        8Fy5MO2T7q8FbMSMzfo38xzkBvDdio1Tf3W3FerXe1DFepmtQRVDpOLMNTYG9vXCKsytWBRgJxFv
+        ln5PpIKFsD2HyUDXz9qAVwieO7/p1um/zm+FaTbu44SiNmAn4G6R3Yx9n0DVzDLw696bTz37U8Bn
+        iIsJN721TIO4FSaKfUVp3IbojI8Nk6IUPfi2cyJ0E50IBZjoRBMcN6nr3PcINNT/3mvod9zN6N0g
+        kNi4SZB/qmOBcxyYl/AUWk7u+q2Y45snjLG/92MrG3h3p2J8bAqfGluRZbokrcnZnoSQd3dCStjf
+        ONDufYKlCDfD+JSa1Nwy2fBtX3jiQVcyia9atLXO2AAghoX0NKXR814Wi5/PRZwTQwgAAA==
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Age:
+      - '0'
+      Cache-Control:
+      - no-transform, max-age=300
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Sep 2025 16:21:20 GMT
+      Last-Modified:
+      - Fri, 05 Sep 2025 16:18:22 GMT
+      Server:
+      - openresty/1.25.3.2
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept
+    status:
+      code: 200
+      message: OK
+version: 1

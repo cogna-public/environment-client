@@ -1,4 +1,5 @@
 import pytest
+import vcr
 import pytest_asyncio
 from environment.flood_monitoring.client import FloodClient
 from environment.flood_monitoring.models import (
@@ -9,11 +10,17 @@ from environment.flood_monitoring.models import (
     Reading,
 )
 
+pytestmark = pytest.mark.vcr()
+
 
 @pytest_asyncio.fixture
 async def client():
     async with FloodClient(verbose=True) as client_instance:
         yield client_instance
+
+@pytest.fixture(scope="module")
+def vcr_cassette_dir():
+    return "tests/cassettes/integration"
 
 
 @pytest.mark.asyncio

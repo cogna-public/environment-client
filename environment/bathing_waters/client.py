@@ -19,9 +19,8 @@ async def log_request(request):
 
 
 async def log_response(response):
-    await response.aread()
+    # Avoid pre-reading body so VCR can capture content
     print(f"<<< Response: {response.status_code}")
-    print(response.text)
 
 
 class BathingWatersClient(httpx.AsyncClient):
@@ -39,7 +38,7 @@ class BathingWatersClient(httpx.AsyncClient):
             **kwargs: Additional keyword arguments to pass to the httpx.AsyncClient constructor.
         """
         super().__init__(
-            base_url="https://environment.data.gov.uk/bwq/profiles",
+            base_url="https://environment.data.gov.uk",
             timeout=timeout,
             follow_redirects=True,
             **kwargs,
@@ -55,7 +54,7 @@ class BathingWatersClient(httpx.AsyncClient):
         Returns:
             list[BathingWater]: A list of bathing waters.
         """
-        response = await self.get("/bathing-water.json", params=params)
+        response = await self.get("/doc/bathing-water.json", params=params)
         response.raise_for_status()
         return [BathingWater(**item) for item in response.json()["result"]["items"]]
 
@@ -69,7 +68,7 @@ class BathingWatersClient(httpx.AsyncClient):
         Returns:
             BathingWater: Details of the bathing water.
         """
-        response = await self.get(f"/bathing-water/{bathing_water_id}.json")
+        response = await self.get(f"/id/bathing-water/{bathing_water_id}")
         response.raise_for_status()
         return BathingWater(**response.json()["items"][0])
 
@@ -80,7 +79,7 @@ class BathingWatersClient(httpx.AsyncClient):
         Returns:
             list[SamplingPoint]: A list of sampling points.
         """
-        response = await self.get("/sampling-point.json", params=params)
+        response = await self.get("/id/sampling-point", params=params)
         response.raise_for_status()
         return [SamplingPoint(**item) for item in response.json()["items"]]
 
@@ -94,7 +93,7 @@ class BathingWatersClient(httpx.AsyncClient):
         Returns:
             SamplingPoint: Details of the sampling point.
         """
-        response = await self.get(f"/sampling-point/{sampling_point_id}.json")
+        response = await self.get(f"/id/sampling-point/{sampling_point_id}")
         response.raise_for_status()
         return SamplingPoint(**response.json()["items"][0])
 
@@ -105,7 +104,7 @@ class BathingWatersClient(httpx.AsyncClient):
         Returns:
             list[SampleAssessment]: A list of sample assessments.
         """
-        response = await self.get("/sample-assessment.json", params=params)
+        response = await self.get("/id/sample-assessment", params=params)
         response.raise_for_status()
         return [SampleAssessment(**item) for item in response.json()["items"]]
 
@@ -121,7 +120,7 @@ class BathingWatersClient(httpx.AsyncClient):
         Returns:
             SampleAssessment: Details of the sample assessment.
         """
-        response = await self.get(f"/sample-assessment/{sample_assessment_id}.json")
+        response = await self.get(f"/id/sample-assessment/{sample_assessment_id}")
         response.raise_for_status()
         return SampleAssessment(**response.json()["items"][0])
 
@@ -132,7 +131,7 @@ class BathingWatersClient(httpx.AsyncClient):
         Returns:
             list[ComplianceAssessment]: A list of compliance assessments.
         """
-        response = await self.get("/compliance-assessment.json", params=params)
+        response = await self.get("/id/compliance-assessment", params=params)
         response.raise_for_status()
         return [ComplianceAssessment(**item) for item in response.json()["items"]]
 
@@ -149,7 +148,7 @@ class BathingWatersClient(httpx.AsyncClient):
             ComplianceAssessment: Details of the compliance assessment.
         """
         response = await self.get(
-            f"/compliance-assessment/{compliance_assessment_id}.json"
+            f"/id/compliance-assessment/{compliance_assessment_id}"
         )
         response.raise_for_status()
         return ComplianceAssessment(**response.json()["items"][0])
@@ -161,7 +160,7 @@ class BathingWatersClient(httpx.AsyncClient):
         Returns:
             list[PollutionIncident]: A list of pollution incidents.
         """
-        response = await self.get("/pollution-incident.json", params=params)
+        response = await self.get("/id/pollution-incident", params=params)
         response.raise_for_status()
         return [PollutionIncident(**item) for item in response.json()["items"]]
 
@@ -177,6 +176,6 @@ class BathingWatersClient(httpx.AsyncClient):
         Returns:
             PollutionIncident: Details of the pollution incident.
         """
-        response = await self.get(f"/pollution-incident/{pollution_incident_id}.json")
+        response = await self.get(f"/id/pollution-incident/{pollution_incident_id}")
         response.raise_for_status()
         return PollutionIncident(**response.json()["items"][0])

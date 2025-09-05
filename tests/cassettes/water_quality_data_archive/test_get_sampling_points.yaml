@@ -1,0 +1,59 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - environment.data.gov.uk
+      user-agent:
+      - python-httpx/0.28.1
+    method: GET
+    uri: https://environment.data.gov.uk/water-quality/view/id/sampling-point
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA7xVTW+bQBC9+1dMHEVNpGBDbMe1i5Fqx5F6ag+55LhmB1gFWLS7/mrU/95hF2jt
+        pIdcaoRYdt6++eQ5vHj4vnp6/rGGzBR51AvbBzIe9QBCI0yO0VOGULEU4Si3sEeFkEv5IsoUEqmA
+        S9TlJwN4ENrA9dgf34RDd7CmKNAwKFmBi/5O4L6SyvQhlqXB0iz6e8FNtuC4EzF69uVWlMIIlns6
+        Zjkugr4NRJsjBUJ8G8mP8EoLWrL4JVVyW3IvlrlUc7hcP9bXF2tu9+7Wd48j3+0ZPBiP5SIt5xBT
+        AKjcfkLxeAkrRH6cA1Pk/hY0K7WnUYnEYQqmUkHnLNWvHvngYjfghJVpE5FNYA6zyVV75OCSmsNo
+        hEW76XjGWADbGvk+YVSzt4lKxZHSC6oDaJkLDper1cqxbazNUyLNTFeG2Wx2Ys0x+bdxI42RRXd2
+        uVyenDWyosIufT/w/cb7uDqcQzzrQjEutpoK8A7ARfgW8aaJ+0wYdPwV45zGbA5Tyjy4u3Klqofg
+        4OmMcbmndsCIjJ/pVumGXU/8W2hvfxBMb2om260saMppm63FT6SK+n7TqnZapiN/HUyc+1yU6GVY
+        l5agg4nr4HnrI6ga4m5CKKigbXeXQ7fzztw+Tuvr76L+p26fT0ozDCfdPG93gzlt6DmIxqYbqYev
+        9eWya+t8f3/fpvvRXpKoDBs9CIeZlapeWOuCVYoLz4OnTGhIRE5CJXaoQZRQbTe5iIekToNa5MDz
+        LLr+yOKcab3ouy/Zyg15IEMNqH9hFnxEAgcUVNCdraJnEs2CHSFjO4SCNPJYIQdDmkrTrVBrIBGt
+        X63E/kHKHXLiqhxVOOwiCqvoW2K1mJEUW6KqouSYEbIEuS9RQZxh/GJtpE5UC3JRSEKLkpaFRbbc
+        DXM4dCWk6O1/wW8AAAD//wMAFpuadRwGAAA=
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - text/html; charset=UTF-8
+      Date:
+      - Fri, 05 Sep 2025 16:51:42 GMT
+      Server:
+      - openresty/1.25.3.2
+      Status:
+      - 404 Not Found
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      X-Request-Id:
+      - d2f783e9a5db0e4135eeadcfde8e5610
+      X-Robots-Tag:
+      - noindex, nofollow
+    status:
+      code: 404
+      message: Not Found
+version: 1

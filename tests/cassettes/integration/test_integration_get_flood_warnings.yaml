@@ -1,0 +1,70 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - environment.data.gov.uk
+      user-agent:
+      - python-httpx/0.28.1
+    method: GET
+    uri: https://environment.data.gov.uk/flood-monitoring/id/floods
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA9WZS5PaOBCA7/MrVD4DNq/dDKcMk83WViXZ1MBmDqkctLbAWmSJkuRhqVT++7b8
+        kGwGgr1AFRwN7W7141O35O/oDiHvbSi4Jv9qD02QF2u9nvg+4S9UCp4QrnsR1ri3FC+9dOUvmBBR
+        NxGcaiEpX/oJ0dgvFPT+UYKzyEMdo9b8Y1R+N0bgeZ3+zaiKiczs/OYMoIcl4eE2fw0EGQ3hmVSX
+        s9lsehxrKjhmWIYxfSGqXFIkQl+sCe/CEonMltwtVPjwg4KX/KFvtYN4atzKtFVtNHbZGJRkQWS+
+        SuMsrLowlWkMevfWXigSYy77fQZWUzVBUwgNUkS+gKdWMMbqvZAJzkS/ts8EjfLsqF6oXrzOKQpk
+        tDhNgdbsNAWxTpiHvkFof5jwZgVFNUmUieNXW1NvKVTb/6haGys/GA6fH94Pg4HNQ0RUKOnaFFum
+        +wmKTaIp2+qYIMrRM5YbGq5UTKVLHsEPkuBPOMnL9pkojT7SiGEewZKLEiH4iSxBrRX7JBATfAnq
+        U0XAk0Iug8zoM/YLfKDCTnXWaFSvHQbNoUi5BgAhkjPBaJwy1tnrJ8hyUUHnVfRAYC3YdlnEru1u
+        UuZlZ6m+1ZlHCKxIk5U/5SwPkldNkpcBmdVNXjkgbkP6x7vMzVcL96ia0whD0U3QAjNFymQkRCm8
+        zNOKbIoUAfO0iBlUBIe9EHGbTiiThZAVuEv5D/BeZmNU6tc0IR9zG48xhmKAOoA8DILBuBvcd4Px
+        PPh1MhhNgsAaN688YZqVzD7Rsdt9jOisWOsx9QVsnbLkTi44W2xDt/b9dM20SCUCWNAM4q3FBk2l
+        ECuDm6FuynC4Qo+mSuU2FxOpjhHspwuIc3TjLLrwQKVWWHyXRoxsO2gGgdkQw2TNYUBUMCjDGCdr
+        Lbh5hJJTGnpedW8CnfuYrRm1fJ2wl9aYHQZNmc1SD55V896CYOfGlRM8bk7weNIf1mBvQHCm/nIE
+        94/1xxkwa/jNN+LPhK+sBzfXG52zdR5/Rl/p7QHaairPTlt/cJw2s4lszWaZb60dyFQETUuVjzMs
+        SSR4/tgCQOfZdQM4vm8MIIiO2gKYq78cgJX2v7+FPplJyA6aZjO2Y+YNTKN2QKgTN6UygSKFDlf6
+        doAvFx4QODtfQeNuZrLQYvy0bl83O23GT2hEv5TJ8q5j/AwczLvs/LVew+lrnp3bbhYe694heDpo
+        zyhZOegxhXdPfDvDZZnRQ/hVl3B+/IbH21s+d5hEdhBcoxRdrg2L1oUrZ7HVIDl4U2auKYsXHiQD
+        dzbdZRFOAiuC5nCtpu2ib252dP7VYdyZHTNfu4J3a+4eosvGDATOT9f9cboyon6XhBTzYQd92CZw
+        LjeHdDNJmhuy3JMWzc96dbXAjeb9N5NBv8ngWIqOnFdHm1/5DgwvlxscR27G2AXONT+Etb1lQF+g
+        GZDt7SLoPK4j6IZJd6VSenmAvJqqs5M3cmNlc2zckq4Wm/zKslWf6rfApqL+ctgE/bI0vF1s8u3u
+        UbBbvv637v2EkcqE6D55tLxmdHG8SO/qH+9dlXQ1p8wt+8opa/FhAIB0M+7R5lT57lBQBp/jftzd
+        /QfpmBE5NB4AAA==
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Age:
+      - '77'
+      Cache-Control:
+      - no-transform, max-age=300
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Sep 2025 16:58:14 GMT
+      Last-Modified:
+      - Fri, 05 Sep 2025 16:48:21 GMT
+      Server:
+      - openresty/1.25.3.2
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - accept
+    status:
+      code: 200
+      message: OK
+version: 1

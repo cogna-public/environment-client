@@ -11,9 +11,8 @@ async def log_request(request):
 
 
 async def log_response(response):
-    await response.aread()
+    # Avoid pre-reading body so VCR can capture content
     print(f"<<< Response: {response.status_code}")
-    print(response.text)
 
 
 class RainfallClient(httpx.AsyncClient):
@@ -31,7 +30,7 @@ class RainfallClient(httpx.AsyncClient):
             **kwargs: Additional keyword arguments to pass to the httpx.AsyncClient constructor.
         """
         super().__init__(
-            base_url="https://environment.data.gov.uk/rainfall",
+            base_url="https://environment.data.gov.uk/flood-monitoring",
             timeout=timeout,
             **kwargs,
         )
@@ -46,6 +45,7 @@ class RainfallClient(httpx.AsyncClient):
         Returns:
             list[Station]: A list of rainfall monitoring stations.
         """
+        params = {"parameter": "rainfall", **params}
         response = await self.get("/id/stations", params=params)
         response.raise_for_status()
         return [Station(**item) for item in response.json()["items"]]
@@ -62,7 +62,13 @@ class RainfallClient(httpx.AsyncClient):
         """
         response = await self.get(f"/id/stations/{station_id}")
         response.raise_for_status()
-        return Station(**response.json()["items"][0])
+        data = response.json()["items"]
+        if isinstance(data, list):
+            data = data[0]
+        # Normalise measures field to a list if a single object is returned
+        if isinstance(data.get("measures"), dict):
+            data["measures"] = [data["measures"]]
+        return Station(**data)
 
     async def get_measures(self, **params) -> list[Measure]:
         """
@@ -71,6 +77,7 @@ class RainfallClient(httpx.AsyncClient):
         Returns:
             list[Measure]: A list of rainfall measures.
         """
+        params = {"parameter": "rainfall", **params}
         response = await self.get("/id/measures", params=params)
         response.raise_for_status()
         return [Measure(**item) for item in response.json()["items"]]
@@ -87,7 +94,10 @@ class RainfallClient(httpx.AsyncClient):
         """
         response = await self.get(f"/id/measures/{measure_id}")
         response.raise_for_status()
-        return Measure(**response.json()["items"][0])
+        data = response.json()["items"]
+        if isinstance(data, list):
+            data = data[0]
+        return Measure(**data)
 
     async def get_readings(self, **params) -> list[Reading]:
         """
@@ -96,7 +106,8 @@ class RainfallClient(httpx.AsyncClient):
         Returns:
             list[Reading]: A list of rainfall readings.
         """
-        response = await self.get("/id/readings", params=params)
+        params = {"parameter": "rainfall", **params}
+        response = await self.get("/data/readings", params=params)
         response.raise_for_status()
         return [Reading(**item) for item in response.json()["items"]]
 
@@ -110,6 +121,12 @@ class RainfallClient(httpx.AsyncClient):
         Returns:
             Reading: Details of the reading.
         """
-        response = await self.get(f"/id/readings/{reading_id}")
+        response = await self.get(f"/data/readings/{reading_id}")
         response.raise_for_status()
-        return Reading(**response.json()["items"][0])
+        data = response.json()["items"]
+        if isinstance(data, list):
+            data = data[0]
+        # Ensure measure field is a string ID
+        if isinstance(data.get("measure"), dict):
+            data["measure"] = data["measure"].get("@id")
+        return Reading(**data)

@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 
 class PrefLabel(BaseModel):
     id: str = Field(..., alias="@id")
-    prefLabel: str = Field(..., alias="prefLabel")
+    prefLabel: Optional[Union[str, List[str]]] = Field(None, alias="prefLabel")
 
 
 class Area(BaseModel):
@@ -22,10 +22,20 @@ class AssetType(BaseModel):
     prefLabel: str
 
 
+class ActivitySubType(BaseModel):
+    id: str = Field(..., alias="@id")
+    prefLabel: Optional[Union[str, List[str]]] = None
+
+
+class ActivityType(BaseModel):
+    id: str = Field(..., alias="@id")
+    prefLabel: Optional[Union[str, List[str]]] = None
+
+
 class MaintenanceTask(BaseModel):
     id: str = Field(..., alias="@id")
-    activitySubType: dict
-    activityType: dict
+    activitySubType: Optional[ActivitySubType] = None
+    activityType: Optional[ActivityType] = None
 
 
 class PrimaryPurpose(BaseModel):
@@ -40,7 +50,7 @@ class ProtectionType(BaseModel):
 
 class TargetCondition(BaseModel):
     id: str = Field(..., alias="@id")
-    prefLabel: str
+    prefLabel: Optional[str] = None
 
 
 class Asset(BaseModel):
@@ -48,14 +58,14 @@ class Asset(BaseModel):
     actualCondition: Optional[Union[PrefLabel, List[PrefLabel]]] = None
     area: Union[List[Area], Area]
     assetStartDate: Optional[str] = None
-    assetSubType: Union[AssetSubType, List[AssetSubType]]
-    assetType: AssetType
-    label: str
+    assetSubType: Optional[Union[AssetSubType, List[AssetSubType]]] = None
+    assetType: Optional[AssetType] = None
+    label: Optional[str] = None
     lastInspectionDate: Optional[Union[str, List[str]]] = None
     maintenanceTask: Optional[List[MaintenanceTask]] = None
-    notation: str
-    primaryPurpose: PrimaryPurpose
-    protectionType: ProtectionType
+    notation: Optional[str] = None
+    primaryPurpose: Optional[PrimaryPurpose] = None
+    protectionType: Optional[ProtectionType] = None
     targetCondition: Optional[PrefLabel] = None
     waterCourseName: Optional[str] = None
     actualDcl: Optional[float] = None
@@ -65,17 +75,16 @@ class Asset(BaseModel):
     designDcl: Optional[float] = None
     designUcl: Optional[float] = None
     currentSop: Optional[float] = None
-    # Additional fields based on common API patterns and documentation summary
     description: Optional[str] = None
     status: Optional[str] = None
-    location: Optional[dict] = None  # Assuming location might be a nested object
+    location: Optional[dict] = None
 
 
 class MaintenanceActivity(BaseModel):
     id: str = Field(..., alias="@id")
     label: Optional[str] = None
     description: Optional[str] = None
-    activityType: Optional[dict] = None  # Assuming a nested object for activity type
+    activityType: Optional[dict] = None
     startDate: Optional[str] = None
     endDate: Optional[str] = None
 

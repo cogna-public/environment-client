@@ -33,7 +33,7 @@ class Measure(BaseModel):
 
 
 class Reading(BaseModel):
-    id: str = Field(..., alias="@id")
+    id: Optional[str] = Field(None, alias="@id")
     dateTime: Optional[str] = None
     measure: Optional[str] = None
     value: Optional[float] = None

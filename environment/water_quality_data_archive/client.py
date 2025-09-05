@@ -26,9 +26,8 @@ async def log_request(request):
 
 
 async def log_response(response):
-    await response.aread()
+    # Avoid pre-reading body so VCR can capture content
     print(f"<<< Response: {response.status_code}")
-    print(response.text)
 
 
 class WaterQualityDataArchiveClient(httpx.AsyncClient):
