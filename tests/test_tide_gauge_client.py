@@ -1,5 +1,4 @@
 import pytest
-import vcr
 from environment.tide_gauge.client import TideGaugeClient
 from environment.tide_gauge.models import TideGaugeStation, TideGaugeReading
 
@@ -9,6 +8,7 @@ pytestmark = pytest.mark.vcr()
 @pytest.fixture
 def client():
     return TideGaugeClient()
+
 
 @pytest.fixture(scope="module")
 def vcr_cassette_dir():

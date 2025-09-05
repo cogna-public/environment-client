@@ -1,5 +1,4 @@
 import pytest
-import vcr
 from environment.bathing_waters.client import BathingWatersClient
 from environment.bathing_waters.models import BathingWater
 

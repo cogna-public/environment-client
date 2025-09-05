@@ -1,5 +1,4 @@
 import pytest
-import vcr
 from environment.flood_monitoring.client import FloodClient
 from environment.flood_monitoring.models import (
     FloodWarning,

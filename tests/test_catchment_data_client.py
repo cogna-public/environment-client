@@ -1,5 +1,4 @@
 import pytest
-import vcr
 from environment.catchment_data.client import CatchmentDataClient
 
 pytestmark = pytest.mark.vcr()

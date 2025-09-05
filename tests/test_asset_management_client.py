@@ -1,5 +1,4 @@
 import pytest
-import vcr
 from environment.asset_management.client import AssetManagementClient
 from environment.asset_management.models import Asset
 

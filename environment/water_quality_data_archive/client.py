@@ -33,7 +33,7 @@ async def log_response(response):
 class WaterQualityDataArchiveClient(httpx.AsyncClient):
     """
     An async client for the UK Environment Agency's Water Quality Data Archive API.
-    
+
     NOTE: The Water Quality Archive (WQA) APIs are being replaced. As of
     Spring/Summer 2025 the existing endpoints may return 404 and could stop
     working entirely. See: https://environment.data.gov.uk/apiportal/support

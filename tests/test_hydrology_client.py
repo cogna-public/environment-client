@@ -1,5 +1,4 @@
 import pytest
-import vcr
 from environment.hydrology.client import HydrologyClient
 from environment.hydrology.models import Station, Measure, Reading
 
@@ -9,6 +8,7 @@ pytestmark = pytest.mark.vcr()
 @pytest.fixture
 def client():
     return HydrologyClient()
+
 
 @pytest.fixture(scope="module")
 def vcr_cassette_dir():

@@ -1,5 +1,4 @@
 import pytest
-import vcr
 from environment.rainfall.client import RainfallClient
 from environment.rainfall.models import Station, Measure, Reading
 
@@ -9,6 +8,7 @@ pytestmark = pytest.mark.vcr()
 @pytest.fixture
 def client():
     return RainfallClient()
+
 
 @pytest.fixture(scope="module")
 def vcr_cassette_dir():

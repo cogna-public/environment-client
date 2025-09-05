@@ -1,5 +1,4 @@
 import pytest
-import vcr
 from environment.water_quality_data_archive.client import WaterQualityDataArchiveClient
 from environment.water_quality_data_archive.models import (
     SamplingPoint,
@@ -22,11 +21,16 @@ pytestmark = pytest.mark.vcr()
 # As of Sept 2025, the Water Quality Data Archive endpoints at
 # https://environment.data.gov.uk/water-quality/view/* return 404.
 # Skipping these VCR tests until replacement API is available.
-pytestmark = [pytestmark, pytest.mark.skip(reason="Water Quality Data Archive API unavailable (404)")]
+pytestmark = [
+    pytestmark,
+    pytest.mark.skip(reason="Water Quality Data Archive API unavailable (404)"),
+]
+
 
 @pytest.fixture
 def client():
     return WaterQualityDataArchiveClient()
+
 
 @pytest.fixture(scope="module")
 def vcr_cassette_dir():

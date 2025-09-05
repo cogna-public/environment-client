@@ -123,7 +123,9 @@ class HydrologyClient(httpx.AsyncClient):
             data["unit"] = data["unit"].get("@id")
         return Measure(**data)
 
-    async def get_readings(self, measure_id: str | None = None, **params) -> list[Reading]:
+    async def get_readings(
+        self, measure_id: str | None = None, **params
+    ) -> list[Reading]:
         """
         Returns a list of readings.
 
