@@ -24,3 +24,8 @@ lint:
 
 format:
 	uv run ruff format .
+
+publish:
+	rm -rf dist/ build/ *.egg-info/ src/*.egg-info/ environment_client.egg-info/
+	uv build
+	uv publish
