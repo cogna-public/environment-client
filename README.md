@@ -47,6 +47,50 @@ Note: The Water Quality Archive (WQA) APIs will be replaced later this year, mea
 For updates, see DEFRA’s support pages:
 https://environment.data.gov.uk/apiportal/support
 
+## Implementation Status
+
+- Flood Monitoring
+  - Base: `https://environment.data.gov.uk/flood-monitoring`
+  - Implemented: `get_flood_warnings` (`/id/floods`), `get_flood_areas` (`/id/floodAreas`), `get_stations` (`/id/stations`), `get_station_by_id`, `get_measures` (`/id/measures`), `get_measure_by_id`, `get_readings` (`/data/readings`), `get_reading_by_id`.
+  - Notes: Uses canonical `/id` for entities and `/data` for readings. Integration tests use VCR.
+
+- Rainfall
+  - Base: Flood Monitoring (parameterised)
+  - Implemented: Stations and measures filtered with `parameter=rainfall`; readings via `/data/readings?parameter=rainfall`; reading-by-id via `/data/readings/{measure_id}/{timestamp}`.
+  - Notes: Rainfall is part of Flood Monitoring; not a separate base path.
+
+- Tide Gauge
+  - Base: Flood Monitoring (typed)
+  - Implemented: Stations via `/id/stations?type=TideGauge`, station-by-id, readings via `/data/readings?stationType=TideGauge`, reading-by-id via `/data/readings/{measure_id}/{timestamp}`.
+
+- Hydrology
+  - Base: `https://environment.data.gov.uk/hydrology`
+  - Implemented: Stations, station-by-id, measures, measure-by-id, readings per-measure via `/id/measures/{id}/readings` (lists do not expose a global `/id/readings`).
+  - Notes: Some fields (e.g., `status`, `riverName`, `station`, `unit`) are normalised for model compatibility.
+
+- Bathing Waters
+  - Base: `https://environment.data.gov.uk`
+  - Implemented: `get_bathing_waters` (`/doc/bathing-water.json`), plus related entity lookups under `/id/*`.
+
+- Asset Management
+  - Base: `https://environment.data.gov.uk/asset-management`
+  - Implemented: Assets, maintenance activities/tasks/plans, capital schemes (JSON endpoints under `/id/*.json`).
+
+- Catchment Planning (Catchment Data)
+  - Base: `https://environment.data.gov.uk/catchment-planning`
+  - Status: Placeholder only (`get_catchment_data` returns `[]` until the correct endpoint is confirmed).
+
+- Water Quality Data Archive (WQA)
+  - Base: `https://environment.data.gov.uk/water-quality/view`
+  - Status: Being replaced by DEFRA; many endpoints currently return HTTP 404. Client issues a `DeprecationWarning`. Tests are skipped until the replacement API is available.
+
+## Testing & VCR
+
+- Tests are recorded/replayed with `pytest-vcr` (record mode: once).
+- Cassettes are stored under `tests/cassettes/` with per-module subfolders (e.g., `rainfall/`, `hydrology/`, `tide_gauge/`, `integration/`).
+- To re-record a cassette, delete the corresponding YAML file and re-run the specific test.
+- Integration tests also use VCR to avoid live network dependency.
+
 ## Development
 
 This project uses `uv` for dependency management.
