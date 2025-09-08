@@ -1,6 +1,7 @@
 # DEFRA Environment Client 🌿
 
 [![PyPI version](https://img.shields.io/pypi/v/environment-client.svg)](https://pypi.org/project/environment-client/)
+[![GitHub Release](https://img.shields.io/github/v/release/cogna-public/environment-client?display_name=release)](https://github.com/cogna-public/environment-client/releases)
 [![Publish Status](https://github.com/cogna-public/environment-client/actions/workflows/publish.yml/badge.svg)](https://github.com/cogna-public/environment-client/actions/workflows/publish.yml)
 [![Python Versions](https://img.shields.io/pypi/pyversions/environment-client.svg)](https://pypi.org/project/environment-client/)
 [![License: MIT](https://img.shields.io/pypi/l/environment-client.svg)](LICENSE)
@@ -131,10 +132,24 @@ This project uses `uv` for dependency management.
 
 ## Releasing 🚀
 
-- Bump version in `pyproject.toml` (PEP 440, e.g., `0.3.1`).
-- Commit and push changes to `main`.
+- Bump version in `pyproject.toml` (PEP 440).
+- Commit and push to `main`.
 - Create a GitHub Release for tag `vX.Y.Z` in `cogna-public/environment-client` (the tag can be created in the Release UI).
-- The GitHub Actions workflow builds wheels/sdist and publishes to PyPI via Trusted Publishing (no token required).
+- The GitHub Actions workflow builds wheels/sdist with `uv build` and publishes to PyPI via Trusted Publishing (no token required).
+
+Quick release with Just
+
+Use the Justfile recipe to bump, tag, push, and create the GitHub Release:
+
+```
+just release                # bump patch
+just release minor          # bump minor
+just release major "Notes"  # bump major with release notes
+```
+
+Notes
+- Requires `gh` CLI authenticated (`gh auth status`).
+- Uses `uv version --bump` to update `pyproject.toml` and tags `vX.Y.Z`.
 
 First-time setup on PyPI
 - In PyPI project `environment-client` → Settings → Publishing → add `cogna-public/environment-client` as a Trusted Publisher (GitHub Actions).
