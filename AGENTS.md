@@ -6,6 +6,10 @@
 - Entrypoint example: `main.py` demonstrates basic client usage.
 - Tooling: `pyproject.toml` (hatch build, pytest), `Justfile` (common tasks), `uv.lock`.
 
+Note on naming
+- PyPI distribution: `environment-client`
+- Python import path: `environment`
+
 ## Build, Test, and Development Commands
 - Install deps: `uv sync` or `just install`
 - Run all fast tests: `just test`

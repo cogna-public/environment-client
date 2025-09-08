@@ -26,6 +26,6 @@ format:
 	uv run ruff format .
 
 publish:
-	rm -rf dist/ build/ *.egg-info/ src/*.egg-info/ environment_client.egg-info/
+	rm -rf dist/ build/ *.egg-info/ src/*.egg-info/
 	uv build
-	uv publish
+	uv publish ${PYPI_TOKEN:+--token $PYPI_TOKEN}

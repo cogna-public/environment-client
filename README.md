@@ -1,6 +1,6 @@
-# Environment Client 🌿
+# DEFRA Environment Client 🌿
 
-A Python client for the environment.data.gov.uk APIs. Fast, typed, and async‑friendly. 🌟
+Python client for DEFRA’s environment.data.gov.uk APIs — fast, typed, and async‑friendly. 🌟
 
 ## Installation 🧰
 
@@ -36,6 +36,19 @@ if __name__ == "__main__":
 - Hydrology
 - Rainfall
 - Water Quality Data Archive (WQA)
+
+## Package Name vs Import Path 🔤
+
+- Distribution (PyPI): `environment-client`
+- Import path (Python): `environment`
+
+Example:
+
+```python
+from environment.flood_monitoring import FloodClient
+```
+
+Note: The distribution is named `environment-client` while the import path is `environment`. This keeps imports concise but clarifies the project scope on PyPI.
 
 ### ⚠️ Important: WQA API Replacement
 
@@ -110,3 +123,17 @@ This project uses `uv` for dependency management.
 - Open an issue for larger changes; link issues in PRs.
 - Follow commit prefixes (e.g., `feat:`, `fix:`, `docs:`) and keep messages concise.
 - Run `just lint`, `just format`, and `just test` before pushing. Update or re-record VCR cassettes when tests change network interactions.
+
+## Releasing 🚀
+
+- Bump version in `pyproject.toml` (PEP 440, e.g., `0.3.1`).
+- Commit and push changes to `main`.
+- Create a GitHub Release for tag `vX.Y.Z` in `cogna-public/environment-client` (the tag can be created in the Release UI).
+- The GitHub Actions workflow builds wheels/sdist and publishes to PyPI via Trusted Publishing (no token required).
+
+First-time setup on PyPI
+- In PyPI project `environment-client` → Settings → Publishing → add `cogna-public/environment-client` as a Trusted Publisher (GitHub Actions).
+- Or approve the pending publisher request after running the workflow once, then rerun the publish job.
+
+Verify
+- PyPI project page: https://pypi.org/project/environment-client/
