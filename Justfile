@@ -25,7 +25,3 @@ lint:
 format:
 	uv run ruff format .
 
-publish:
-	rm -rf dist/ build/ *.egg-info/ src/*.egg-info/
-	uv build
-	uv publish ${PYPI_TOKEN:+--token $PYPI_TOKEN}
