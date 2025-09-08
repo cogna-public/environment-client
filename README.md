@@ -1,5 +1,10 @@
 # DEFRA Environment Client 🌿
 
+[![PyPI version](https://img.shields.io/pypi/v/environment-client.svg)](https://pypi.org/project/environment-client/)
+[![Publish Status](https://github.com/cogna-public/environment-client/actions/workflows/publish.yml/badge.svg)](https://github.com/cogna-public/environment-client/actions/workflows/publish.yml)
+[![Python Versions](https://img.shields.io/pypi/pyversions/environment-client.svg)](https://pypi.org/project/environment-client/)
+[![License: MIT](https://img.shields.io/pypi/l/environment-client.svg)](LICENSE)
+
 Python client for DEFRA’s environment.data.gov.uk APIs — fast, typed, and async‑friendly. 🌟
 
 ## Installation 🧰
