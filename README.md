@@ -151,9 +151,5 @@ Notes
 - Requires `gh` CLI authenticated (`gh auth status`).
 - Uses `uv version --bump` to update `pyproject.toml` and tags `vX.Y.Z`.
 
-First-time setup on PyPI
-- In PyPI project `environment-client` → Settings → Publishing → add `cogna-public/environment-client` as a Trusted Publisher (GitHub Actions).
-- Or approve the pending publisher request after running the workflow once, then rerun the publish job.
-
-Verify
+Links
 - PyPI project page: https://pypi.org/project/environment-client/
