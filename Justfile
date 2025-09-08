@@ -19,6 +19,10 @@ test-catchment-data:
 run-main:
 	uv run python main.py
 
+pypi-smoke:
+	set -euo pipefail
+	cd pypi_smoke && uv run --no-project --isolated --with environment-client --with pytest --with pytest-asyncio -m pytest -q
+
 lint:
 	uv run ruff check --fix .
 
