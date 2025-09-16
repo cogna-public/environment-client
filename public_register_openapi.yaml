@@ -1,0 +1,3976 @@
+openapi: 3.0.3
+info:
+  title: Public Registers Online API
+  version: 1.0.0
+  license:
+    name: Environment Agency Conditional Licence
+    url: https://www.gov.uk/government/publications/environment-agency-conditional-licence/environment-agency-conditional-licence
+  termsOfService: "data-licence"
+  description: |
+    # Introduction
+    
+    The Environment Agency licenses industry, business and individuals to carry out certain activities that have the
+    potential to pollute the environment. 
+    
+    The Public Registers Online service provides access to information about permits, registrations and exemptions both
+    in the form of searchable [web pages](index) and as data which can be accessed by developers via an API (Application Program
+    Interface).
+                 
+    All data provided via the PRO (both website and API) is provided under a licence, with no requirement for
+    registration. Before downloading or accessing data, you must first check the supporting information provided through
+    the PRO Data Licence information page to determine if the conditions on use are suitable for your purposes.  If they
+    aren’t, this information is not provided with a licence for use, and the data is provided for read right only.
+
+    # Terms of use
+    
+    These APIs are provided under the
+    [Environment Agency Conditional Licence](https://www.gov.uk/government/publications/environment-agency-conditional-licence/environment-agency-conditional-licence)
+    with no requirement for registration. Detailed information about specific conditions for each register can be found [here](data-licence).
+    If you make use of this data, note the conditions carefully.
+    
+    # Coverage
+    ## Geography
+    
+    The data that is available from this API covers all of England.
+    
+    ## Time
+    
+    This API returns all currently active permits and licences. Some of the endpoints also return permits and
+    licences that have recently expired. See individual endpoint help for more information.
+    
+    # Authentication
+    
+    No authentication is required to use these APIs.
+    
+    # Note on terminology
+    
+    The different public registers use different terminology for the things that they contain. These include
+    *registration*, *permit*, *licence* and *enforcement action*.
+    
+    The API, and much of this documentation, uses the generic term registration, meaning anything that has been
+    recorded in a register. This uniformity enables a single API to work across registers.
+    
+    When a register contains a specific type of registration, for example an Environmental Permit, the data
+    items will be marked as being of that type and the user interface will display the entries using the
+    appropriate terminology.
+    
+    The API provides and uses web addresses for all the entities involved - registers, individual registrations,
+    holders and sites associated with registrations. We use the term <em>URI</em> for these web addresses.
+    
+    # Endpoints summary
+    
+    This is a brief summary of the APIs available, see the individual endpoint sections for details.
+    
+    In the links in the tables `{root}` corresponds to `http://environment.data.gov.uk/public-register`.
+    
+    |What|API|Comments|
+    |-----|----|-----|
+    |Search across all registers|`{root}/api/search`|See [Cross Register](#get-/api/search) section for details of parameters and responses|
+    |List entries in a single register|`{root}/{register}/registration`|In addition to the parameters available for the cross-register search, various other filters can be applied to each register; see individual register section for details|
+    |Retrieve an entry|`{root}/{register}/registration/{id}`|The registration ID can be found using the above search endpoints|
+    |Name/number lookup|`{root}/api/completion`|Text completion to find possible names of holders or registration numbers based on a partial text entry. See [Cross Register](#get-/api/completion) section for details|
+    
+    # API structure
+    
+    The APIs provide a [REST](http://en.wikipedia.org/wiki/Representational_state_transfer) style access to the data
+    via simple HTTP GET requests which return data in JSON, CSV or RDF formats (as well as providing an HTML rendering
+    for web browsers).
+    
+    ## Generic response structure
+    
+    With the exception of the [name/number lookup endpoint](#get-/api/completion), all API endpoints contain two main
+    elements: metadata and items [[1]](#footnote-1). For example:
+    
+    **application/json**
+    ```
+    {
+      "meta": {...},
+      "items": [...]
+    }
+    ```
+    **application/rdf+xml**
+    ```
+      <rdf:Description rdf:about="http://environment.data.gov.uk/public-register/api/search?name-search=%2example-search-term"> 
+        ...
+        <j.1:items rdf:parseType="Collection">
+          ...
+        </j.1:items>
+      </rdf:Description>
+    ```
+    
+    **text/turtle**
+    ```
+    <http://environment.data.gov.uk/public-register/api/search?name-search=%2example-search-term>
+        ...
+        <http://purl.org/linked-data/api/vocab#items>
+                ( ... ) .
+    ```
+    
+    
+    ### Metadata and versioning
+    The metadata block provides information on the publisher and applicable licence as well as a link to this,
+    or other, documentation. For JSON responses, this will be the `meta` field, and linked data content types include
+    this information as properties of the request URL. CSV resonses do not include metadata.
+    
+    
+    |Property|JSON field name|Predicate URI|Comment|
+    |--|--|--|--|
+    |Publisher|publisher|http://purl.org/dc/terms/publisher|Publisher name|
+    |Licence|licence|http://purl.org/dc/terms/licence|Link to the data licence|
+    |Documentation|documentation|http://www.w3.org/2000/01/rdf-schema#seeAlso|Link to this (or other) documentation|
+    |Version|version|http://www.w3.org/2002/07/owl#versionInfo|API version number.|
+    |Comment|comment|http://www.w3.org/2000/01/rdf-schema#comment|API version note (eg "Beta")|
+    |Alternative formats|hasFormat|http://purl.org/dc/terms/hasFormat|If the resource is also available in other formats then this will supply a list of URLs for those alternative formats (the media type is implied as a suffix; see [content types](#overview--content-types))|
+    |Limit|limit|<http://purl.org/linked-data/api/vocab#limit>|The limit applied to the search (where applicable). Where no `_limit` parameter was given, this indicates any default that may have been applied|
+    |Offset|offset|<http://purl.org/linked-data/api/vocab#offset>|The offset applied to the search (where applicable)|
+    
+    
+    <p id="footnote-1" style="font-size: x-small; line-height: unset;">
+    1. JSON responses also contain an <code style="font-size: x-small;">@context</code> reference, which will enable the data to be read as json-ld in the
+    next version of the API, but this is not yet suported. If you require the response as linked data, use the
+    `text/turtle` or `application/rdf+xml` content type.
+    </p>
+    
+    ### Items
+    
+    The items element in the response will contain an array of items. Even if there is only one entry (eg. a registration
+    description resonse), the value will always be an array. JSON responses identify each item by a URI given in the
+    `@id` field.
+
+    ## Content types
+    
+    The descriptions of individual items from `{root}/{register}/registration/{id}` endpoints can be obtained in multiple
+    formats. The default format is a human readable HTML render but all item descriptions can also return information
+    in JSON and RDF formats (RDF/XML and Turtle).
+    Similarly lists of items can be obtained in these formats, as well as in CSV format. The CSV format more closeley matches
+    the human-readable HTML page, but does not contain as much information as the other formats.
+    
+    To select the desired format use standard HTTP content negation. E.g.:
+    ```
+    curl -i -H "Accept: text/turtle" http://environment.data.gov.uk/public-register/radioactive-substance/registration/GB3435DG
+    ```
+    All endpoints also support a short cut of appending a type suffix to the URI to force a particular content type.
+    The supported suffixes are:
+    
+    |Suffix|Type|
+    |---|---|
+    |.json|application/json|
+    |.html|text/html|
+    |.csv|text/csv|
+    |.ttl|text/turtle|
+    |.rdf|application/rdf+xml|
+    
+    ## Lists: limits and paging
+    
+    Endpoints that return a list of items support the query parameters `_limit` and `_offset` to limit the number of
+    results and page through them: `_limit=y&_offset=x` will return the first *y* items, starting at item *x*. This
+    allows you to page through long lists of results.
+    
+    A default limit may be applied if none is given, so the `_offset` parameter must be used to fetch results in batches
+    should you require more results.
+    
+    If applicable, the limit (including any default used) and offset will be included in the response metadata.
+    
+
+servers:
+  - url: https://environment.data.gov.uk/public-register
+tags:
+  - name: Cross Register
+    description: |
+      ### Endpoints to allow searching for a permit or registration across all registers
+      These do not cover the Enforcement Actions register, which can only be accessed through its own endpoint
+    x-tag-expanded: false
+
+  - name: Waste Operations
+    description: |
+      ### Access the register of Environmental Permitting Regulations - Waste Operations
+      The Waste Operations registrations are more complex that for most registers in that they include a number of different life cycle dates (transfer, modification, revocation etc) and have multiple associated registration numbers.
+      In addition to the registration number in the ePR these entries also have a _Waste Management Licence number_ and search by number will match either of these fields.
+    x-tag-expanded: false
+  - name: End of Life Vehicles
+    description: |
+      ### Access the register of Environmental Permitting Regulations – End of Life Vehicles
+      The End of Life Vehicle (ELV) registrations are a subset of the Waste Operation registrations.
+      The full returned data includes a `sameRegistrationAs` link to the matching Waste Operation Entry along with core information from that.
+    x-tag-expanded: false
+  - name: Industrial Installations
+    description: |
+      ### Access the register of Environmental Permitting Regulations – Installations
+    x-tag-expanded: false
+  - name: Water Discharge Consents
+    description: |
+      ### Access the register of Environmental Permitting Regulations – Discharge Consents
+    x-tag-expanded: false
+  - name: Radioactive Substance Permits
+    description: |
+      ### Access the register of Environmental Permitting Regulations – Radioactive Substance Permits
+      The register of Environmental Permits for Radioactive Substances contains permits relating to specific activities within the relevant legislation. In the open ePR API we use the `registrationType` property to indicate type of the permit.
+    x-tag-expanded: false
+  - name: Waste Carriers, Brokers, and Dealers
+    description: |
+      ### Access the register of Waste Carriers, Brokers, and Dealers
+      The register of Waste Carriers, Brokers and Dealers is complicated by the existence of two _tiers_ of registration - _Upper Tier_ and _Lower Tier_.
+      Within the open ePR API we treat these as a single multi-tiered register. Within the Upper Tier, businesses or individuals can be registered as _Waste Carriers and Dealers_, _Waste Brokers and Dealers_ or _Waste Carriers, Brokers and Dealers_.
+      Within the Lower Tier there is no such distinction made and all registrations cover any of waste brokers, carriers and dealers.
+
+      Within the data we represent this by using the `registrationType` property to convey what the holder is registered as and the `tier` property to convey which of the two tiers they are registered within.
+    x-tag-expanded: false
+  - name: Waste Exemptions
+    description: |
+      ### Access the register of Waste Exemptions
+      A waste exemption is a waste operation that is exempt from needing an environmental permit. Each exemption has specific limits and conditions that the holder must operate within.
+
+      The address of the holder (`holder.hasAddress`) is often different from the site to which the registration applies (`site.siteAddress`).
+      A registration may include more than one site. A site may be associated with more than one exemption. Each exemption has an associated `registrationType` identifying the exemption and asscocated `registrationDate` and `expiryDate`. 
+
+      The exemptions apply to the sites, not to the registration, but are included as properties of the registration
+      for convenience, as well as being included for each site.
+    x-tag-expanded: false
+  - name: Water Quality Exemptions
+    description: |
+      ### Access the register of Water Quality Exemptions
+      The structure of Water Quality Exemptions is similar to standard register entries except there is no holder associated with the exemption, just a site. This means the exemptions can be found by location and address search, or by search on exemption (registration) number but not by holder name.
+    x-tag-expanded: false
+  - name: Scrap Metal Dealers
+    description: |
+      ### Access the register of  Scrap Metal Dealers
+      The register of Scrap Metal Dealers supports two forms of permit - _Site_ and _Collector_. For the open epR API we use the `registrationType` property to indicate the type of permit.
+
+      Collectors are mobile operators and their registration does not include an address. Sites do have an address but, in the current release, no geographic location.
+      So the register does not support search by geographic location. It does support text search over the text of the address, but such a search will only return permits of type _Site_.
+
+      Scrap Metal Dealer information comes directly from Local Authorities so each permit has an associated Local Authority field and search by Local Authority is supported.
+
+      A single permit may apply to multiple sites. In that case the `site` property for the registration will be an array containing information on each site.
+      The user interface, and the CSV downloads, split these into separate lines for convenience.
+    x-tag-expanded: false
+  - name: Enforcement Actions
+    description: |
+      ### Access the register of Enforcement Actions
+      Enforcement actions are quite distinct in structure from other register entries, as they describe an action taken in response to one or more offences rather than a permit or registration.
+      Therefore, they do not have a permit holder or registration number and do not appear in cross-register searches
+    x-tag-expanded: false
+  - name: Flood Risk Activity Exemptions
+    description: |
+      ### Access the register of Flood Risk Activity Exemptions
+      A flood risk exemption is for work on or near a main river or sea defence that is exempt from needing an environmental permit. These are for activities impacting main rivers and sea defences.
+      You may need an environmental permit if you want to work in, over, under or near a main river or flood or sea defence. Some flood risk activities are exempt from needing a permit and you can
+      carry out the work if you register an exemption. This is a register of those exemptions in place across England.
+
+      The structure of Flood Risk Activity Exemptions is similar to standard register entries except there is no address associated with the exemption, just a location.
+      This means the exemptions can be found by location and local authority search, or by search on exemption (registration) number but not by address. It is also possible to filter results on exemption type.
+    x-tag-expanded: false
+
+components:
+  parameters:
+    idParam:
+      name: number-search
+      in: query
+      required: false
+      description: |
+        The full or partial ID of a registration or permit
+        
+        Note that registration numbers will be treated as collections of words so that a registration number such as
+        _CB/HE5831CE_ will be found by a search for _HE5831_ even though the initial _CB/_ is missing.
+        
+        Each word will be treated as a prefix, so _HE_ will match _CB/HE5831CE_ 
+
+        As a special case a word ending in a number will be treated as an exact word mach so _A2_ will match _A2_ or
+        _CB/A2/001_ but not _A27_ or _CB/A231/001_. This is to avoid confusion when searching for numeric entries.
+        If you need to search for a registration number by prefix then use an explicit wildcard charater e.g. _A2*_.
+      schema:
+        type: string
+    nameParam:
+      name: name-search
+      in: query
+      required: false
+      description: |
+        Full or partial name of the business or individual registered.
+        
+        The text queries are treated as prefixes (so _Atkin_ would match _Atkins_, _Atkinson_ and so on).
+        To search for a match somewhere within the field you can prefix the search with _*_ (so _*tkins_ would match
+        _Atkins_, _Watkins_ and so on). If the search string contains more than one word then each is matched separately
+        (so _jo atkin_ would match _John Atkinson_ and _Atkins Joinery_). 
+        
+        Note that water quality exemptions do not have a holder associated with them and won't appear in results.
+      schema:
+        type: string
+      examples:
+        namePrefix:
+          value: Atkin
+          summary: First part of a first, last, or business name
+        nameSuffix:
+          value: "*kins"
+          summary: Last part of a first, last, or business name
+        nameComponent:
+          value: Inc
+          summary: One part of a business name
+        multiPart:
+          value: Jo Atkin
+          summary: Prefixes for multiple words in the name
+    nameNumberParam:
+      name: name-number-search
+      in: query
+      required: false
+      schema:
+        type: string
+      description: |
+        A common requirement is to search for a specific registration knowing either the name of the registered
+        person/business or the registration number. This parameter allows you to search for all records where either the
+        name or registration number matches the query term.
+        
+        A name number search will return the simple union of the results you would expect from `name-search` and
+        `number-search` individually, so a query for `name-search=abc` contains all the records from a search with
+        `name-search=abc` and all the records from `number-search=abc`, and the same matching rules apply. For registers
+        that do not support `name-search`, such as Water Quality Exemptions, this behaves the same as `number-search`.
+        
+        Note that, __if this parameter is included, no other parameters may be given__, with the exception of `_limit`
+        and `_offset`. All other search parameters behave
+        as filters, so that all results will match all parameters, and only this one supports the union of
+        two separate search terms. Should you need to filter the results of a `name-number-search` query by any other
+        field, join the results of separate queries with the `name-search` and `number-search` parameter.
+        
+        
+
+    addressParam:
+      name: address-search
+      in: query
+      required: false
+      description: |
+        Full or partial address of the business or individual registered.
+        
+        Each word in the address will be treated seperately, so a search for _Park Road_ will match _1 Park Road_,
+        _1 High Road, West Park_, or _Park Estate, City Road_.
+        
+        All words are treated as prefixes, so a search for _London_ will return addresses in _Londonderry_, but words that
+        end with a number are an exception to this, so a search for _10_ will not match _100 Park Road_.
+      schema:
+        type: string
+      examples:
+        postcodeSegment:
+          value: SW9
+          summary: First part of a postcode
+        postcode:
+          value: SW9 0AD
+          summary: Full postcode
+        city:
+          value:  London
+          summary: Full or partial city or town name
+        street:
+          value: Park Road
+          summary: Full or partial street address
+    eastingParam:
+      name: easting
+      in: query
+      required: false
+      description: |
+        Easting of OS grid point to search by distance radius.
+        Must be used with `northing` and `dist`.
+      schema:
+        type: integer
+    northingParam:
+      name: northing
+      in: query
+      required: false
+      description: |
+        Northing of OS grid point to search by distance radius.
+        Must be used with `easting` and `dist`.
+      schema:
+        type: integer
+    distParam:
+      name: dist
+      in: query
+      required: false
+      description: |
+        Distance in km from the given OS grid point to search within.
+        Must be used with `easting` and `northing` to specify the search center.
+        If left empty, the default value will be used
+      schema:
+        type: integer
+        default: 5
+    limitParam:
+      name: _limit
+      in: query
+      required: false
+      description: |
+        The number of registrations to return.
+        Each register has a maximum supported `_limit`; in most cases this is 10,000 but some are lower.
+        To fetch more registrations, either page through the results using the `_offset` parameter or use the download endpoint to access the full dataset.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 10000
+        default: 2000
+      example: 100
+    offsetParam:
+      name: _offset
+      in: query
+      required: false
+      description: |
+        Return a list of items starting at the given index. Can be used with the `_limit` parameter to page through results
+      schema:
+        type: integer
+        default: 0
+    localAuthorityParam:
+      name: local-authority
+      in: query
+      required: false
+      schema:
+        type: string
+      description: |
+        Exact name of the local authority to search
+        Not applicable to the following registers that lack local authority data:
+        * Waste carriers, brokers, and dealers
+        * Waste exemptions
+        * Enforcement actions
+      example: Lambeth
+
+    regimeParam:
+      name: regime
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - carrier-broker-dealer
+          - carrier-dealer
+          - broker-dealer
+          - upper-tier
+          - lower-tier
+      description: |
+        This parameter is provided for convenience and allows you to filter by both tier and registration type.
+
+        Explanation of acceptable values:
+        * `carrier-broker-dealer` Upper Tier registrations as Waste Carrier, Broker and Dealer.
+        * `carrier-dealer` Upper Tier registrations as Waste Carrier and Dealer.
+        * `broker-dealer` Upper Tier registrations as Waste Broker and Dealer.
+        * `upper-tier` Any Upper Tier registration.
+        * `lower-tier` Any Lower Tier registration.
+
+    exactNameParam:
+      name: name
+      in: query
+      required: false
+      description: Exact name of the registration or permit holder; use `name-search` or completion endpoint to search for a name
+      schema:
+        type: string
+    registrationNumberParam:
+      name: registrationNumber
+      in: query
+      required: false
+      description: >
+        The exact registration number of a permit; use `number-search` or completion endpoint to search for a registration
+        number. These may contain forbidden URL charchters such as `/`. Note that unlike the ID path parameter, this
+        corresponds to the registrationNumber field, not the notation field.
+      schema:
+        type: string
+    IdPathParam:
+      name: id
+      in: path
+      required: true
+      description: >
+        The ID of a single registration, as given by the last section of its @id property.
+        The entire @id of a registration is equivalent to the full path to it on the details endpoint.
+        Typically the registrationNumber with forbidden characters such as / replaced
+        with dashes, but this is not the case for some registers.
+      schema:
+        type: string
+  schemas:
+    Metadata:
+      type: object
+      required:
+        - publisher
+        - licence
+        - documentation
+        - hasFormat
+      properties:
+        publisher:
+          description: The publisher of this dataset; usually Environment Agency
+          type: string
+          example: Environment Agency
+        licence:
+          description: Link to the data usage licence for this dataset
+          type: string
+          format: uri
+          example: https://www.gov.uk/government/publications/environment-agency-conditional-licence/environment-agency-conditional-licence
+        documentation:
+          description: Link to API documentation
+          type: string
+          format: uri
+          example: http://environment.data.gov.uk/public-register/view/api-reference.html
+        version:
+          type: string
+          description: API version
+          example: 0.1
+        comment:
+          type: string
+        hasFormat:
+          description: |
+            If the resource is also available in other formats, this will list URLs for those alternative formats,
+            with the media type implied by the suffix.
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration.html?_limit=10
+            - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration.csv?_limit=10
+            - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration.rdf?_limit=10
+            - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration.ttl?_limit=10
+          ## TODO: check if we still include replaces and replacedBy
+        limit:
+          type: integer
+          description: |
+            The limit applied to search results. When no `_limit` parameter is given for a search endpoint, a default is
+            applied.
+        offset:
+          type: integer
+          description: |
+            The offset from the start of the search results list at which the response begins. This is the same as the
+            request `_offset` parameter, where given
+
+
+
+    ## Component schemas used to construct registration object schema
+    ID:
+      type: string
+      format: uri
+      description: Unique URI identifier for a resource
+    Date:
+      type: string
+      format: date
+      example: "2020-09-12"
+    DateParam:
+      type: string
+      pattern: '^\d{2}\/\d{2}\/\d{4}$'
+      example: 01/01/2001
+    Holder:
+      type: object
+      description: The agent (person or organization) which holds the registration or permit.
+      required:
+        - name
+        - "@id"
+      properties:
+        "@id":
+          $ref: '#/components/schemas/ID'
+        name:
+          type: string
+          description: The full name of the person or organization
+        tradingName:
+          type: string
+          description: Trading name of the licence holder
+
+    HolderType:
+      type: string
+      format: uri
+      description: >
+        The class(es) or type(s) of this holder. Value can be either a single item or an array where
+        multiple types are present. All are `foaf:Agent` or a subclass thereof.
+      example: http://xmlns.com/foaf/0.1/Person
+
+    HolderSummary:
+      allOf:
+        - $ref: '#/components/schemas/Holder'
+        - type: object
+          properties:
+            type:
+              oneOf:
+                - $ref: '#/components/schemas/HolderType'
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/HolderType'
+    HolderDetail:
+      allOf:
+        - $ref: '#/components/schemas/Holder'
+        - type: object
+          properties:
+            type:
+              oneOf:
+                - type: object
+                  properties:
+                    "@id":
+                      $ref: '#/components/schemas/HolderType'
+                - type: array
+                  items:
+                    type: object
+                    properties:
+                      "@id":
+                        $ref: '#/components/schemas/HolderType'
+
+    Register:
+      type: object
+      description: The register to which a registration belongs
+      required:
+        - "@id"
+        - label
+      properties:
+        "@id":
+          allOf:
+            - $ref: '#/components/schemas/ID'
+            - enum:
+                - http://environment.data.gov.uk/public-register/waste-operations/register
+                - http://environment.data.gov.uk/public-register/end-of-life-vehicles/register
+                - http://environment.data.gov.uk/public-register/industrial-installations/register
+                - http://environment.data.gov.uk/public-register/water-discharges/register
+                - http://environment.data.gov.uk/public-register/radioactive-substance/register
+                - http://environment.data.gov.uk/public-register/waste-carriers-brokers/register
+                - http://environment.data.gov.uk/public-register/waste-exemptions/register
+                - http://environment.data.gov.uk/public-register/water-discharge-exemptions/register
+                - http://environment.data.gov.uk/public-register/scrap-metal-dealers/register
+                - http://environment.data.gov.uk/public-register/enforcement-action/register
+                - http://environment.data.gov.uk/public-register/flood-risk-exemptions/register
+              description: >
+                The register to which the registration or permit belongs.
+
+        label:
+          type: string
+        type:
+          description: Register type
+          type: object
+          properties:
+            "@id":
+              $ref: '#/components/schemas/ID'
+      example:
+        "@id": http://environment.data.gov.uk/public-register/waste-exemptions/register
+        label: Waste Exemption Registrations for England
+    Notation:
+      oneOf:
+        - type: string
+        - type: integer
+      description: >
+        Unique identifier for the registration. Generally the same as `registrationNumber` but my
+        differ when a local authority code is needed to disambiguate the IDs across authorities
+    LocalAuthority:
+      type: object
+      required:
+        - "@id"
+        - label
+      properties:
+        "@id":
+          $ref: '#/components/schemas/ID'
+        label:
+          type: string
+      example:
+        "@id": http://opendatacommunities.org/id/metropolitan-district-council/birmingham
+        label: Birmingham
+    RegistrationType:
+      type: object
+      description: |
+        The type of registration within a single register. Note that this is only included for registers that
+        include multiple registration types. The `notation` and `label` properties mean the same thing, and one will
+        be included for all registration types
+      required:
+        - "@id"
+      properties:
+        "@id":
+          $ref: '#/components/schemas/ID'
+        notation:
+          type: string
+        label:
+          type: string
+        prefLabel:
+          type: string
+        seeAlso:
+          description: Link to descriptive webpage
+          oneOf:
+            - type: string
+              format: uri
+            - type: object
+              properties:
+                "@id":
+                  type: string
+                  format: uri
+
+    PostcodeURI:
+      description: The URI for the postcode area, uses OS open data URIs
+      type: string
+      format: uri
+      example: http://data.ordnancesurvey.co.uk/id/postcodeunit/NR31UB
+    Address:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          description: The full address text including postcode
+          type: string
+          example: Dragonfly House, 2 Gilders Way, Norwich, NR3 1UB
+        postcode:
+          description: >
+            Full postcode portion of the address.
+            In the UK, this will be a string but foreign addresses may be integers
+          oneOf:
+            - type: integer
+            - type: string
+          example: NR3 1UB
+        organization_name:
+          description: The organization name to use in the address
+          type: string
+          example: Environment Agency
+        street_address:
+          description: The number (optional) and street name part of the address
+          type: string
+          example: 2 Gilders Way
+        locality:
+          description: The region and/or county portion of the address
+          type: string
+          example: Norwich
+    AddressSummary:
+      allOf:
+        - $ref: '#/components/schemas/Address'
+        - type: object
+          properties:
+            postcodeURI:
+              $ref: '#/components/schemas/PostcodeURI'
+    AddressDetail:
+      allOf:
+        - $ref: '#/components/schemas/Address'
+        - type: object
+          properties:
+            postcodeURI:
+              type: object
+              properties:
+                "@id":
+                  $ref: '#/components/schemas/PostcodeURI'
+              required:
+                - "@id"
+
+    Site:
+      type: object
+      description: The site associated with the registration
+      required:
+        - "@id"
+      properties:
+        "@id":
+          $ref: '#/components/schemas/ID'
+        siteAddress:
+          $ref: '#/components/schemas/AddressSummary'
+    SiteDetail:
+      type: object
+      required:
+        - "@id"
+        - siteAddress
+      properties:
+        "@id":
+          $ref: '#/components/schemas/ID'
+        siteAddress:
+          $ref: '#/components/schemas/AddressDetail'
+        location:
+          description: Geographic location of the site
+          type: object
+          required:
+            - easting
+            - northing
+          properties:
+            easting:
+              description: Easting of OS grid point
+              type: number
+            northing:
+              description: Northing of OS grid point
+              type: number
+            gridReference:
+              description: British National Grid Reference for the location
+              type: string
+              example: SP2740010660
+        premises:
+          description: Name of the premises
+          type: string
+        siteType:
+          type: object
+          required:
+            - "@id"
+          properties:
+            "@id":
+              $ref: '#/components/schemas/ID'
+            notation:
+              description: A string or other literal which uniquely identifies the site.siteType.
+              type: string
+    Tier:
+      type: object
+      description: The tier within a multi-tier register (for example upper/lower tier Waste Carriers Brokers and Dealers).
+      properties:
+        "@id":
+          $ref: '#/components/schemas/ID'
+        label:
+          type: string
+      example:
+        "@id": http://environment.data.gov.uk/public-register/waste-carriers-brokers/def/tier/lower
+        label: Lower
+    EAarea:
+      type: string
+      format: uri
+      enum:
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/1-1
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/1-2
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/1-3
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/10-36
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/10-37
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/10-38
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/10-39
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/2-29
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/2-30
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/2-31
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/3-34
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/3-35
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/4-11
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/4-12
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/6-27
+        - http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/6-28
+
+    WasteExemption:
+      type: object
+      properties:
+        "@id":
+          $ref: '#/components/schemas/ID'
+        registrationDate:
+          $ref: '#/components/schemas/Date'
+        expiryDate:
+          $ref: '#/components/schemas/Date'
+        registrationType:
+          type: object
+          properties:
+            "@id":
+              type: string
+              format: uri
+            prefLabel:
+              type: string
+              description: Summary of the exemption type
+            codeCategory:
+              type: object
+              description: Group containing this exemption type
+              properties:
+                "@id":
+                  $ref: '#/components/schemas/ID'
+                notation:
+                  type: string
+                prefLabel:
+                  type: string
+                  description: Description of the exemption type group
+                member:
+                  description: Exemptions types that are members of this group
+                  type: array
+                  items:
+                    oneOf:
+                      - $ref: '#/components/schemas/ID'
+                      - type: object
+                        properties:
+                          "@id":
+                            $ref: '#/components/schemas/ID'
+            notation:
+              type: string
+              description: Unique identifier of the exemption type
+            description:
+              type: string
+              description: Description of the exemption type
+            seeAlso:
+              description: Link to descriptive web page for this exemption type
+              oneOf:
+                - type: string
+                  format: uri
+                - type: object
+                  properties:
+                    "@id":
+                      type: string
+                      format: uri
+
+    WasteExemptionSite:
+      allOf:
+        - $ref: '#/components/schemas/SiteDetail'
+        - properties:
+            exemption:
+              $ref: '#/components/schemas/WasteExemption'
+
+
+
+## Schema shared by all registration objects
+    GenericRegistration:
+      type: object
+      required:
+        - "@id"
+        - register
+        - registrationNumber
+      properties:
+        "@id":
+          $ref: '#/components/schemas/ID'
+        register:
+          $ref: '#/components/schemas/Register'
+        registrationNumber:
+          description: The permission, permit or registration number
+          anyOf:
+            - type: string
+            - type: number
+    RDFtype:
+      description: RDF type of an item
+      type: string
+      format: uri
+      example: http://environment.data.gov.uk/public-register/def/registration/RegisterItem
+
+    GenericRegistrationSummary:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistration'
+        - type: object
+          properties:
+            type:
+              type: array
+              items:
+                $ref: '#/components/schemas/RDFtype'
+            holder:
+              oneOf:
+                - $ref: '#/components/schemas/HolderSummary'
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/HolderSummary'
+
+    GenericRegistrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistration'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: array
+              items:
+                type: object
+                properties:
+                  "@id":
+                    $ref: '#/components/schemas/RDFtype'
+            holder:
+              oneOf:
+                - $ref: '#/components/schemas/HolderDetail'
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/HolderDetail'
+
+
+
+    DistanceSearchResult:
+      type: object
+      properties:
+        distance:
+          type: number
+          description: Only present when searching by location and indicates the distance from that location in km
+## Schema for a single registration object in the search results
+    RegistrationSummary:
+      description: Summary of a single registration that matches the search parameters across all registers
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationSummary'
+        - type: object
+          properties:
+            expiryDate:
+              allOf:
+                - description: The current date at which the registration will expire unless it is renewed.
+                - $ref: '#/components/schemas/Date'
+            registrationDate:
+              allOf:
+                - description: The date of registration associated with a register items such as a Permit or Registration
+                - $ref: '#/components/schemas/Date'
+            localAuthority:
+              $ref: '#/components/schemas/LocalAuthority'
+            registrationType:
+              $ref: '#/components/schemas/RegistrationType'
+            site:
+              $ref: '#/components/schemas/Site'
+            tier:
+              $ref: '#/components/schemas/Tier'
+
+    WithSiteSummary:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/Site'
+      required:
+        - site
+    WithSiteDetail:
+      type: object
+      properties:
+        site:
+          $ref: '#/components/schemas/SiteDetail'
+      required:
+        - site
+
+    WasteOperationRegistration:
+      type: object
+      description: >
+        A single Waste Operation registration.
+      properties:
+        register:
+          example:
+            "@id": http://environment.data.gov.uk/public-register/waste-operations/register
+            label: Environmental Permitting Regulations – Waste Operations for England
+        localAuthority:
+          $ref: '#/components/schemas/LocalAuthority'
+        notation:
+          description: >
+            Unique identifiers of this registration, including the registration number from this site,
+            waste management licence number, and any other numbers that may be used elsewhere
+          type: array
+          items:
+            type: string
+        otherLicenceNumber:
+          description: Other licence number - pre-EA permit ref
+          type: string
+        # TODO: share with others that have this
+        wasteManagementLicenceNumber:
+          type: string
+        status:
+          type: object
+          description: The status of this registration
+          required:
+            - "@id"
+            - comment
+          properties:
+            "@id":
+              $ref: '#/components/schemas/ID'
+            comment:
+              type: string
+          example:
+            "@id": http://environment.data.gov.uk/public-register/waste-operations/def/license-status/modified
+            comment: Modified
+        effectiveDate:
+          allOf:
+            - $ref: '#/components/schemas/Date'
+            - description: The date from which a Permit or Regisitration is in effect.
+        issuedDate:
+          allOf:
+            - $ref: '#/components/schemas/Date'
+            - description: The date on which the permit was issued.
+        modificationDate:
+          allOf:
+            - $ref: '#/components/schemas/Date'
+            - description: The date on which a Permit or Registration was modified or amended.
+        revocationDate:
+          allOf:
+            - $ref: '#/components/schemas/Date'
+            - description: The date on which a Permit or Registration was revoked.
+        surrenderDate:
+          allOf:
+            - $ref: '#/components/schemas/Date'
+            - description: The date on which a Permit or Registration was surrendered.
+        suspensionDate:
+          allOf:
+            - $ref: '#/components/schemas/Date'
+            - description: The date on which a Permit or Registration was suspended.
+        transferDate:
+          allOf:
+            - $ref: '#/components/schemas/Date'
+            - description: The date on which a Permit or Registration was transferred to a different holder.
+    WasteOperationRegistrationSummary:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationSummary'
+        - $ref: '#/components/schemas/WasteOperationRegistration'
+        - $ref: '#/components/schemas/WithSiteSummary'
+        - type: object
+          required:
+            - notation
+            - status
+            - register
+    WasteOperationRegistrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationDetail'
+        - $ref: '#/components/schemas/WasteOperationRegistration'
+        - $ref: '#/components/schemas/WithSiteDetail'
+        - type: object
+          required:
+            - notation
+            - status
+            - register
+
+    EndOfLifeVehiclesRegistration:
+      type: object
+      required:
+        - register
+        - notation
+        - area
+        - wasteManagementLicenceNumber
+      properties:
+        register:
+          example:
+            "@id": http://environment.data.gov.uk/public-register/end-of-life-vehicles/register
+            label: Environmental Permitting Regulations – End of Life Vehicles for England
+        notation:
+          description: Unique identifiers of this registration, including the registration number and any others that it is known by elsewhere
+          type: array
+          items:
+            type: string
+        area:
+          type: object
+          description: Environment Agency Area
+          properties:
+            "@id":
+              $ref: '#/components/schemas/EAarea'
+            label:
+              type: string
+              description: Name of EA area
+          required:
+            - "@id"
+            - label
+          example:
+            "@id": http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/1-2
+            label: Essex Norfolk and Suffolk
+        wasteManagementLicenceNumber:
+          type: string
+        # tel:
+        #   description: Phone number
+        #   type: string
+    EndOfLifeVehiclesRegistrationSummary:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationSummary'
+        - $ref: '#/components/schemas/EndOfLifeVehiclesRegistration'
+        - $ref: '#/components/schemas/WithSiteSummary'
+        - type: object
+          properties:
+            sameRegistrationAs:
+              allOf:
+                - $ref: '#/components/schemas/WasteOperationRegistration'
+                - description: >
+                    As this register is a subset of the Waste Operations register, registrations
+                    have an equivalent entry in that register
+            
+
+    EndOfLifeVehiclesRegistrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationDetail'
+        - $ref: '#/components/schemas/EndOfLifeVehiclesRegistration'
+        - $ref: '#/components/schemas/WithSiteDetail'
+        - type: object
+          properties:
+            sameRegistrationAs:
+              allOf:
+                - $ref: '#/components/schemas/WasteOperationRegistration'
+                - description: >
+                    As this register is a subset of the Waste Operations register, registrations
+                    have an equivalent entry in that register
+    InstallationsActivity:
+      type: object
+      description: The type of activity undertaken
+      properties:
+        id:
+          $ref: '#/components/schemas/ID'
+        comment:
+          type: string
+    InstallationsRegistration:
+      type: object
+      required:
+        - activity
+        - notation
+        - register
+      properties:
+        activity:
+          oneOf:
+            - $ref: '#/components/schemas/InstallationsActivity'
+            - type: array
+              items:
+                $ref: '#/components/schemas/InstallationsActivity'
+        localAuthority:
+          $ref: '#/components/schemas/LocalAuthority'
+        registrationDate:
+          allOf:
+            - $ref: '#/components/schemas/Date'
+            - description: The date of registration for this permit
+        documentURL:
+          type: string
+          format: uri
+          description: >
+            The URL where additional documents related to the registration can be downloaded
+        notation:
+          $ref: '#/components/schemas/Notation'
+        register:
+          example:
+            "@id": http://environment.data.gov.uk/public-register/industrial-installations/register
+            label: Environmental Permitting Regulations – Installations for England
+    InstallationsRegistrationSummary:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationSummary'
+        - $ref: '#/components/schemas/InstallationsRegistration'
+        - $ref: '#/components/schemas/WithSiteSummary'
+    InstallationsRegistrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationDetail'
+        - $ref: '#/components/schemas/InstallationsRegistration'
+        - $ref: '#/components/schemas/WithSiteDetail'
+
+    WaterDischargeRegistration:
+      type: object
+      required:
+        - effectiveDate
+        - effluentType
+        - notation
+      properties:
+        effectiveDate:
+          allOf:
+            - description: The date from which the permit is in effect
+            - $ref: '#/components/schemas/Date'
+        revocationDate:
+          allOf:
+            - description: The date on which the permit was revoked
+            - $ref: '#/components/schemas/Date'
+        localAuthority:
+          $ref: '#/components/schemas/LocalAuthority'
+        effluentType:
+          description: The type of effluent
+          type: object
+          properties:
+            "@id":
+              allOf:
+                - $ref: '#/components/schemas/ID'
+                - example: http://environment.data.gov.uk/public-register/water-discharges/def/effluent-type/sewage-water-company
+            comment:
+              type: string
+              example: Sewage - water company
+        notation:
+          $ref: '#/components/schemas/Notation'
+        register:
+          example:
+            "@id": http://environment.data.gov.uk/public-register/water-discharges/register
+            label: Environmental Permitting Regulations - Discharges to water and groundwater for England
+
+    WaterDischargeRegistrationSummary:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationSummary'
+        - $ref: '#/components/schemas/WaterDischargeRegistration'
+        - $ref: '#/components/schemas/WithSiteSummary'
+
+    WaterDischargeRegistrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationDetail'
+        - $ref: '#/components/schemas/WaterDischargeRegistration'
+        - $ref: '#/components/schemas/WithSiteDetail'
+
+    RadioactiveSubstanceRegistration:
+      type: object
+      required:
+        - effectiveDate
+        - register
+        - registrationType
+      properties:
+        registrationType:
+          $ref: '#/components/schemas/RegistrationType'
+        localAuthority:
+          $ref: '#/components/schemas/LocalAuthority'
+        effectiveDate:
+          allOf:
+            - description: The date from which the permit is in effect
+            - $ref: '#/components/schemas/Date'
+        register:
+          example:
+            "@id": http://environment.data.gov.uk/public-register/radioactive-substance/register
+            label: Environmental Permitting Regulations – Radioactive Substances for England
+    RadioactiveSubstanceRegistrationSummary:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationSummary'
+        - $ref: '#/components/schemas/RadioactiveSubstanceRegistration'
+        - $ref: '#/components/schemas/WithSiteSummary'
+    RadioactiveSubstanceRegistrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationDetail'
+        - $ref: '#/components/schemas/RadioactiveSubstanceRegistration'
+        - $ref: '#/components/schemas/WithSiteDetail'
+
+    WasteCarrierBrokerRegistration:
+      type: object
+      required:
+        - register
+        - regime
+        - tier
+        - registrationDate
+      properties:
+        register:
+          example:
+            "@id": http://environment.data.gov.uk/public-register/waste-carriers-brokers/register
+            label: Waste Carriers and Brokers Public Register for England
+        applicantType:
+          description: Indicates the type of person or organisation registered
+          type: object
+          properties:
+            "@id":
+              type: string
+              format: uri
+              example: http://environment.data.gov.uk/public-register/def/applicant-type/person
+            prefLabel:
+              type: string
+              example: Sole trader
+        registrationDate:
+          allOf:
+            - $ref: '#/components/schemas/Date'
+            - description: The date when the entity was registered.
+        expiryDate:
+          allOf:
+            - $ref: '#/components/schemas/Date'
+            - description: The date when registration or permit expires.
+        registrationType:
+          $ref: '#/components/schemas/RegistrationType'
+        tier:
+          $ref: '#/components/schemas/Tier'
+        regime:
+          description: >
+            This represents a combination of two attributes - tier and registration type - and matches the
+            possible values of the `regime` filter. The value is either the tier (if lower tier) or the registration
+            type for upper tier registrations
+          type: object
+          properties:
+            "@id":
+              type: string
+              format: uri
+              example: http://environment.data.gov.uk/public-register/def/regime/carriers-and-brokers/lower-tier
+            prefLabel:
+              type: string
+              example: lower tier
+    WasteCarrierBrokerRegistrationSummary:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationSummary'
+        - $ref: '#/components/schemas/WasteCarrierBrokerRegistration'
+        - type: object
+          properties:
+            site:
+              type: object
+              required:
+                - "@id"
+                - siteAddress
+              properties:
+                "@id":
+                  $ref: '#/components/schemas/ID'
+                siteAddress:
+                  $ref: '#/components/schemas/AddressSummary'
+                location:
+                  type: object
+                  description: >
+                    Structure representing a waste carrier site location.
+                    This is not the same as the physical location
+    WasteCarrierBrokerRegistrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationDetail'
+        - $ref: '#/components/schemas/WasteCarrierBrokerRegistration'
+        - type: object
+          properties:
+            site:
+              type: object
+              required:
+                - "@id"
+                - siteAddress
+              properties:
+                "@id":
+                  $ref: '#/components/schemas/ID'
+                siteAddress:
+                  $ref: '#/components/schemas/AddressDetail'
+                location:
+                  type: object
+                  description: >
+                    Structure representing a waste carrier site location.
+                    This is not the same as the physical location
+
+    WasteExemptionRegistration:
+      type: object
+      required:
+        - register
+        - holder
+      properties:
+        register:
+          example:
+            "@id": http://environment.data.gov.uk/public-register/waste-exemptions/register
+            label: Waste Exemption Registrations for England
+
+        exemption:
+          type: array
+          description: The exemption(s) registered for this site
+          items:
+            $ref: '#/components/schemas/WasteExemption'
+        holder:
+          properties:
+            hasAddress:
+              allOf:
+                - $ref: '#/components/schemas/Address'
+                - description: >
+                   The address of the holder, when different from the site to which the registration applies
+
+        notation:
+          $ref: '#/components/schemas/Notation'
+
+    WasteExemptionRegistrationSummary:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationSummary'
+        - $ref: '#/components/schemas/WasteExemptionRegistration'
+        - type: object
+          properties:
+            site:
+              type: array
+              items:
+                $ref: '#/components/schemas/Site'
+          required:
+            - site
+
+
+    WasteExemptionRegistrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationDetail'
+        - $ref: '#/components/schemas/WasteExemptionRegistration'
+        - type: object
+          properties:
+            holder:
+              properties:
+                hasSite:
+                  $ref: '#/components/schemas/WasteExemptionSite'
+            site:
+              type: array
+              items:
+                $ref: '#/components/schemas/SiteDetail'
+          required:
+            - site
+            - notation
+
+    WaterExemptionRegistration:
+      type: object
+      required:
+        - register
+        - notation
+      properties:
+        register:
+          example:
+            "@id": http://environment.data.gov.uk/public-register/water-discharge-exemptions/register
+            label: Water Quality Exemptions for England
+        localAuthority:
+          $ref: '#/components/schemas/LocalAuthority'
+        notation:
+          $ref: '#/components/schemas/Notation'
+        site:
+          type: object
+          properties:
+            exemption:
+              type: object
+              properties:
+                "@id":
+                  $ref: '#/components/schemas/ID'
+                registrationType:
+                  type: object
+                  properties:
+                    "@id":
+                      $ref: '#/components/schemas/ID'
+                    comment:
+                      type: string
+                      description: >
+                                 An explanatory comment or description of the site.exemption.registrationType.
+                    startDate:
+                      allOf:
+                        - $ref: '#/components/schemas/Date'
+                        - description: Start date for the exemption
+    WaterExemptionRegistrationSummary:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistration'
+        - $ref: '#/components/schemas/WaterExemptionRegistration'
+        - $ref: '#/components/schemas/WithSiteSummary'
+
+    WaterExemptionRegistrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistration'
+        - $ref: '#/components/schemas/WaterExemptionRegistration'
+        - $ref: '#/components/schemas/WithSiteDetail'
+        - type: object
+          properties:
+            type:
+              type: array
+              items:
+                type: object
+                properties:
+                  "@id":
+                    $ref: '#/components/schemas/RDFtype'
+
+    ScrapMetalDealerRegistration:
+      type: object
+      required:
+        - register
+        - registrationType
+      properties:
+        register:
+          example:
+            "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/register
+            label: Scrap Metal Dealer Licences for England
+        expiryDate:
+          description: Date when the licence expires. This may be an array if the licence was renewed
+          oneOf:
+            - $ref: '#/components/schemas/Date'
+            - type: array
+              items:
+                $ref: '#/components/schemas/Date'
+
+        localAuthority:
+          $ref: '#/components/schemas/LocalAuthority'
+        registrationType:
+          allOf:
+            - $ref: '#/components/schemas/RegistrationType'
+            - type: object
+              properties:
+                "@id":
+                  type: string
+                  format: uri
+                  enum:
+                    - http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/site
+                    - http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/collector
+                label:
+                  type: string
+                  enum:
+                    - Site
+                    - Collector
+    ScrapMetalDealerRegistrationSummary:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationSummary'
+        - $ref: '#/components/schemas/ScrapMetalDealerRegistration'
+        - type: object
+          properties:
+            site:
+              oneOf:
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/Site'
+                - $ref: '#/components/schemas/Site'
+
+    ScrapMetalDealerRegistrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationDetail'
+        - $ref: '#/components/schemas/ScrapMetalDealerRegistration'
+        - type: object
+          properties:
+            site:
+              oneOf:
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/SiteDetail'
+                - $ref: '#/components/schemas/SiteDetail'
+
+    EnforcementActionType:
+      type: string
+      format: uri
+      enum:
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/action-type/notice
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/action-type/court-case
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/action-type/enforcement-notice
+    OffenceLegislation:
+      type: string
+      enum:
+        - 6.8 Waste Electrical and Electronic Equipment Regulations 2013 (WEEE)
+        - COMAH
+        - CONTROL OF MAJOR ACCIDENT HAZARD REGULATIONS 1999
+        - CONTROL OF POLLUTION (AMENDMENT) ACT 1989
+        - CONTROL OF POLLUTION (OIL STORAGE) (ENG) REG 2001
+        - CONTROL OF POLLUTION (SILAGE, SLURRY AFO) REG 1991
+        - CONTROL OF POLLUTION ACT 1974
+        - CONTROLLED WASTE (REG. OF CARRIERS...) 1991
+        - DPA
+        - EA
+        - ELR
+        - ENVIRONMENT ACT 1995
+        - ENVIRONMENTAL PERMITTING (E & W) REGULATIONS 2007
+        - ENVIRONMENTAL PERMITTING (E & W) REGULATIONS 2010
+        - ENVIRONMENTAL PROTECTION (DUTY OF CARE) REGS 1991
+        - ENVIRONMENTAL PROTECTION ACT 1990
+        - EPA
+        - EPR
+        - EPR 2010
+        - EPR 2016
+        - EPR07
+        - EPR2010
+        - FGGR
+        - GGR
+        - GREENHOUSE GAS EMISSIONS TRADING SCHEME REGS 2005
+        - GROUNDWATER REGULATIONS 1998
+        - HAZARDOUS WASTE (ENGLAND AND WALES) REGS 2005
+        - HEALTH AND SAFETY AT WORK ACT 1974
+        - HWR
+        - LAND DRAINAGE ACT 1991
+        - LANDFILL (ENGLAND AND WALES) REGULATIONS 2002
+        - LDB
+        - NITRATE VULNERABLE ZONES REGULATIONS 1998
+        - NORTH WEST LAND DRAINAGE BYELAWS
+        - Nitrate Pollution Prevention Regulations 2015
+        - PERSISTENT ORGANIC POLLUTANTS REGULATIONS 2007
+        - POLLUTION PREVENTION AND CONTROL REGULATIONS 2000
+        - POWERS OF CRIMINAL COURT (SENTENCING) ACT 2000
+        - PRO(PW)
+        - PRODUCER RESP. OBLIG. (PACKAGING WASTE) REGS 1997
+        - PRODUCER RESP. OBLIG. (PACKAGING WASTE) REGS 2005
+        - PRODUCER RESP. OBLIG. (PACKAGING WASTE) REGS 2007
+        - PRODUCER RESP. OBLIG. (PACKAGING WASTE) REGS. 1997
+        - ProRes
+        - RADIOACTIVE SUBSTANCES ACT 1993
+        - RESERVOIRS ACT 1975
+        - SALMON &amp; FRESHWATER FISHERIES ACT 1975
+        - SOUTH WEST WATER LAND DRAINAGE BYELAWS 1987
+        - SPECIAL WASTE REGULATIONS 1996
+        - SSAFO
+        - SWA LAND DRAINAGE &amp; SEA DEFENCE BYELAWS
+        - TEPR 2011 (Controls on Ozone-Depleting Substances)
+        - TFS
+        - THAMES WATER AUTHORITY LAND DRAINAGE BYELAWS  1981
+        - THAMES WATER AUTHORITY LAND DRAINAGE BYELAWS 1981
+        - TRANSFRONTIER SHIPMENT OF WASTE REGULATIONS 1994
+        - TRANSFRONTIER SHIPMENT OF WASTE REGULATIONS 2007
+        - The Contempt of Court Act 1981
+        - WASTE (ENGLAND AND WALES) REGULATIONS 2011
+        - WASTE ELECTRICAL &amp; ELECTRONIC EQUIPMENT REGS 2006
+        - WASTE MANAGEMENT LICENSING REGULATIONS 1994
+        - WATER INDUSTRY ACT 1991
+        - WATER RESOURCES (CONT. OF POLLUTION) ETC REGS 2010
+        - WATER RESOURCES ACT 1991
+        - WBAR
+        - WEEE
+        - WESSEX WATER AUTHORITY LAND DRAINAGE BYELAWS 1981
+        - WEWR
+        - WR
+        - WRA
+        - Waste
+    EnforcementAgencyFunction:
+      type: string
+      format: uri
+      enum:
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/em
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/em-waste
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/em-waste-wq-wr
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/em-wq
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/fisheries
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/flood
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/flood-defence
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/flood-waste
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/hife-wq
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/ippc
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/process-industry-regulation
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/radio-active-substances-regulation
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/rsr
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/waste
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/waste-wq
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/water-quality
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/water-resources
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/wq
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/wq-wr
+        - http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/wr
+
+    Offence:
+      type: object
+      required:
+        - "@id"
+        - actionType
+      properties:
+        "@id":
+          $ref: '#/components/schemas/ID'
+        actionType:
+          description: >
+            The type of enforcement action taken in response to this offence
+          type: object
+          required:
+            - "@id"
+          properties:
+            "@id":
+              $ref: '#/components/schemas/EnforcementActionType'
+            prefLabel:
+              type: string
+          example:
+            "@id": http://environment.data.gov.uk/public-register/enforcement-action/def/action-type/enforcement-notice
+            prefLabel: Enforcement Notice
+        agencyFunction:
+          description: >
+            This indicates the function within the Environment Agency associated with an enforcement action
+          type: object
+          required:
+            - "@id"
+            - prefLabel
+          properties:
+            "@id":
+              $ref: '#/components/schemas/EnforcementAgencyFunction'
+            prefLabel:
+              type: string
+              example: Waste
+        legislationTitle:
+          $ref: '#/components/schemas/OffenceLegislation'
+
+    OffenceDetail:
+      allOf:
+        - $ref: '#/components/schemas/Offence'
+        - type: object
+          properties:
+            description:
+              type: string
+              description: Textual description of the offence
+            legislationSection:
+              type: string
+              description: Identifies the section of the legislation that defines the offence
+            impactAir:
+              type: object
+              description: Concept defining the level of impact of the offence as related to Air.
+              properties:
+                label:
+                  type: string
+            impactLand:
+              type: object
+              description: Concept defining the level of impact of the offence as related to land.
+              properties:
+                label:
+                  type: string
+            impactWater:
+              type: object
+              description: Concept defining the level of impact of the offence as related to water.
+              properties:
+                label:
+                  type: string
+
+
+    Offender:
+      type: object
+      description: The person or business subject to an enforcement action
+      required:
+        - "@id"
+        - name
+      properties:
+        "@id":
+          $ref: '#/components/schemas/ID'
+        name:
+          type: string
+        hasAddress:
+          type: object
+          properties:
+            "@id":
+              $ref: '#/components/schemas/ID'
+            address:
+              type: string
+              description: Full postal address
+
+
+    EnforcementAction:
+      type: object
+      description: Summary of an enforcement action
+      required:
+        - "@id"
+        - notation
+        - offence
+        - offender
+      properties:
+        "@id":
+          $ref: '#/components/schemas/ID'
+        notation:
+          allOf:
+            - $ref: '#/components/schemas/Notation'
+            - description: >
+                Numeric identifier for this enforcement action, which can be used as a path parameter
+                with the entry detail endpoint to get more information. Note that this is not a permit
+                or registration number and cannot be used to search this register.
+        offence:
+          description: >
+            Offence or list of offences in response to which this action was taken
+          oneOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/Offence'
+            - $ref: '#/components/schemas/Offence'
+        offender:
+          $ref: '#/components/schemas/Offender'
+        actionDate:
+          allOf:
+            - $ref: '#/components/schemas/Date'
+            - description: The date when this enforcement action took place
+
+    EnforcementActionSummary:
+      allOf:
+        - $ref: '#/components/schemas/EnforcementAction'
+        - type: object
+          properties:
+            register:
+              type: string
+              enum:
+                - http://environment.data.gov.uk/public-register/enforcement-action/register
+              example: http://environment.data.gov.uk/public-register/enforcement-action/register
+
+    EnforcementActionDetail:
+      allOf:
+        - $ref: '#/components/schemas/EnforcementAction'
+        - type: object
+          required:
+            - registrationNumber
+          properties:
+            register:
+              type: object
+              properties:
+                "@id":
+                  type: string
+                  enum:
+                    - http://environment.data.gov.uk/public-register/enforcement-action/register
+                  example: http://environment.data.gov.uk/public-register/enforcement-action/register
+
+            registrationNumber:
+              description: The permission, permit or registration number
+              anyOf:
+                - type: string
+                - type: number
+            offence:
+              oneOf:
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/OffenceDetail'
+                - $ref: '#/components/schemas/OffenceDetail'
+            incident:
+              type: object
+              description: Structure giving reference numbers that identify the incident associated with the enforcement action.
+    FloodRiskExemptionRegistration:
+      type: object
+      required:
+        - register
+        - registrationType
+      properties:
+        register:
+          example:
+            "@id": http://environment.data.gov.uk/public-register/flood-risk-exemptions/register
+            label: Flood Risk Activity Exemptions Public Register for England
+        localAuthority:
+          $ref: '#/components/schemas/LocalAuthority'
+        registrationType:
+          allOf:
+            - $ref: '#/components/schemas/RegistrationType'
+            - description: >
+                The type of exemption registered. The notation field corresponds to the exemption code parameter,
+                and the prefLabel describes the exemption
+              example:
+                "@id": http://environment.data.gov.uk/public-register/flood-risk-exemptions/def/registration-type/FRA2
+                notation: FRA2
+                prefLabel: Electrical cable service…ssing over a main river
+    FloodRiskExemptionRegistrationSummary:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationSummary'
+        - $ref: '#/components/schemas/FloodRiskExemptionRegistration'
+        - $ref: '#/components/schemas/WithSiteSummary'
+    FloodRiskExemptionRegistrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/GenericRegistrationDetail'
+        - $ref: '#/components/schemas/FloodRiskExemptionRegistration'
+        - $ref: '#/components/schemas/WithSiteDetail'
+  responses:
+    searchAllResponse:
+      description: A list of registrations matching the search criteria
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/Metadata'
+              items:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/RegistrationSummary'
+                    - $ref: '#/components/schemas/DistanceSearchResult'
+        application/rdf+xml:
+          schema:
+            type: object
+        text/turtle:
+          schema:
+            type: string
+            format: binary
+        text/csv:
+          schema:
+            type: string
+            format: binary
+
+    exceededLimitResponse:
+      description: |
+        Unprocessable request: the request was correctly formed, but could not be handled by the server because too much data was requested.
+        Please check that the `_limit` parameter does not exceed the maximum value of 10,000 (or fewer for some registers).
+        To get more records, please use the download endpoint.
+    badParamsResponse:
+      description: |
+        ## Bad request
+        Please check the request parameters to ensure that:
+        * If any of the following parameters are given, they must all be given:
+           * `dist`
+           * `easting`
+           * `northing`
+        * The parameters given are applicable to the selected register
+        * If `name-number-search` is included, no other search parameters are.
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Did not recognize request parameters [address-search] as valid for this endpoint, incorrect endpoint?
+
+    notFoundResponse:
+      description: No records are found in this register by this registration number
+    OkDownloadResponse:
+      description: |
+        A zip archive containing the entire register in CSV format along with the data licence, such as:
+        ```
+        |- waste-operations.zip
+          |- waste-operations.csv
+          |- EA_CONDITIONAL_LICENCE.md
+        ```
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+          examples:
+            placeholder:
+              $ref: '#/components/examples/csvExamplePlaceholder'
+  examples:
+    rdfExamplePlaceholder:
+      value: >
+        The schema is the same as for json responses, except the full RDF
+        predicate URIs are used for field keys.
+    turtleExamplePlaceholder:
+      value: File download (.ttl)
+    csvExamplePlaceholder:
+      value: File download (.csv)
+
+
+paths:
+  /waste-operations/registration:
+    get:
+      tags:
+        - Waste Operations
+      description: >
+        Search the register of Environmental Permitting Regulations - Waste Operations
+        
+        In addition to the registration number in the ePR these entries also have a Waste Management Licence number and
+        search by number will match either of these fields.
+      x-code-samples:
+        - lang: cURL
+          label: 'Company name'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/waste-operations/registration.json" \
+            --data-urlencode "name-search=Waste Limited"
+        - lang: cURL
+          label: 'Distance from location'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/waste-operations/registration.json" \
+            --data-urlencode easting=623719 \
+            --data-urlencode northing=309247 \
+            --data-urlencode dist=10
+        - lang: cURL
+          label: 'Address within local authority'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/waste-operations/registration.json" \
+            --data-urlencode "address-search=Station Road" \
+            --data-urlencode local-authority=Babergh
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+        - $ref: '#/components/parameters/nameParam'
+        - $ref: '#/components/parameters/nameNumberParam'
+        - $ref: '#/components/parameters/addressParam'
+        - $ref: '#/components/parameters/eastingParam'
+        - $ref: '#/components/parameters/northingParam'
+        - $ref: '#/components/parameters/distParam'
+        - $ref: '#/components/parameters/localAuthorityParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - $ref: '#/components/parameters/exactNameParam'
+        - $ref: '#/components/parameters/registrationNumberParam'
+      responses:
+        '200':
+          description: A list of waste operation registrations matching search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/WasteOperationRegistrationSummary'
+                        - $ref: '#/components/schemas/DistanceSearchResult'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+
+
+        '400':
+          $ref: '#/components/responses/badParamsResponse'
+        '422':
+          $ref: '#/components/responses/exceededLimitResponse'
+
+  /waste-operations/registration/{id}:
+    get:
+      tags:
+        - Waste Operations
+      description: Fetch all details about a single waste operation registration
+      parameters:
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: Details about the registration given by the ID parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/WasteOperationRegistrationDetail'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+
+
+
+  /end-of-life-vehicles/registration:
+    get:
+      tags:
+        - End of Life Vehicles
+      description: Search Environmental Permitting Regulations – End of Life Vehicles
+      x-code-samples:
+        - lang: cURL
+          label: 'Company name'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/end-of-life-vehicles/registration.json" \
+            --data-urlencode "name-search=Waste Limited"
+        - lang: cURL
+          label: 'Distance from location'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/end-of-life-vehicles/registration.json" \
+            --data-urlencode easting=623719 \
+            --data-urlencode northing=309247 \
+            --data-urlencode dist=10
+        - lang: cURL
+          label: 'Address within a local authority'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/end-of-life-vehicles/registration.json" \
+            --data-urlencode "address-search=Station Road" \
+            --data-urlencode local-authority=Babergh
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+        - $ref: '#/components/parameters/nameParam'
+        - $ref: '#/components/parameters/nameNumberParam'
+        - $ref: '#/components/parameters/addressParam'
+        - $ref: '#/components/parameters/eastingParam'
+        - $ref: '#/components/parameters/northingParam'
+        - $ref: '#/components/parameters/distParam'
+        - $ref: '#/components/parameters/localAuthorityParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - name: area
+          in: query
+          required: false
+          description: |
+            URI of one of the Environment Agency areas as defined below
+            
+            | Area                                                        | URI                                                                        |
+            |-------------------------------------------------------------|----------------------------------------------------------------------------|
+            | Cambridgeshire and Bedfordshire                             | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/1-1   |
+            | Essex Norfolk and Suffolk                                   | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/1-2   |
+            | Lincolnshire and Northamptonshire                           | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/1-3   |
+            | Hertfordshire and North London                              | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/10-36 |
+            | West Thames                                                 | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/10-37 |
+            | Kent and South London                                       | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/10-38 |
+            | Solent and South Downs                                      | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/10-39 |
+            | Staffordshire Warwickshire and West Midlands                | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/2-29  |
+            | Derbyshire Nottinghamshire and Leicestershire               | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/2-30  |
+            | Shropshire Herefordshire Worcestershire and Gloucestershire | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/2-31  |
+            | Yorkshire                                                   | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/3-34  |
+            | Northumberland Durham and Tees                              | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/3-35  |
+            | Cumbria and Lancashire                                      | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/4-11  |
+            | Greater Manchester Merseyside and Cheshire                  | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/4-12  |
+            | Devon and Cornwall                                          | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/6-27  |
+            | Wessex                                                      | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/6-28  |
+          schema:
+            type: string
+            format: uri
+        - $ref: '#/components/parameters/exactNameParam'
+        - $ref: '#/components/parameters/registrationNumberParam'
+      responses:
+        '200':
+          description: A list of ELV registrations matching search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/EndOfLifeVehiclesRegistrationSummary'
+                        - $ref: '#/components/schemas/DistanceSearchResult'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/badParamsResponse'
+        '422':
+          $ref: '#/components/responses/exceededLimitResponse'
+
+  /end-of-life-vehicles/registration/{id}:
+    get:
+      tags:
+        - End of Life Vehicles
+      description: Fetch all details about a single ELV registration
+      parameters:
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: Details about the registration given by the ID parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/EndOfLifeVehiclesRegistrationDetail'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+
+  /industrial-installations/registration:
+    get:
+      tags:
+        - Industrial Installations
+      description: Search the register of Environmental Permitting Regulations – Installations
+      x-code-samples:
+        - lang: cURL
+          label: 'Company name'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/industrial-installations/registration.json" \
+            --data-urlencode "name-search=Power Station"
+        - lang: cURL
+          label: 'Distance from location'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/industrial-installations/registration.json" \
+            --data-urlencode easting=623719 \
+            --data-urlencode northing=309247 \
+            --data-urlencode dist=10
+        - lang: cURL
+          label: 'Address within a local authority'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/industrial-installations/registration.json" \
+            --data-urlencode "address-search=Station Road" \
+            --data-urlencode local-authority=Babergh
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+        - $ref: '#/components/parameters/nameParam'
+        - $ref: '#/components/parameters/nameNumberParam'
+        - $ref: '#/components/parameters/addressParam'
+        - $ref: '#/components/parameters/eastingParam'
+        - $ref: '#/components/parameters/northingParam'
+        - $ref: '#/components/parameters/distParam'
+        - $ref: '#/components/parameters/localAuthorityParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - $ref: '#/components/parameters/exactNameParam'
+        - $ref: '#/components/parameters/registrationNumberParam'
+      responses:
+        '200':
+          description: A list of installations registrations matching search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/InstallationsRegistrationSummary'
+                        - $ref: '#/components/schemas/DistanceSearchResult'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/badParamsResponse'
+        '422':
+          $ref: '#/components/responses/exceededLimitResponse'
+
+  /industrial-installations/registration/{id}:
+    get:
+      tags:
+        - Industrial Installations
+      description: Fetch all details about a single installation registration
+      parameters:
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: Details about the registration given by the ID parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/InstallationsRegistrationDetail'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+
+  /water-discharges/registration:
+    get:
+      tags:
+        - Water Discharge Consents
+      description: Search the register of Environmental Permitting Regulations – Discharge Consents
+      x-code-samples:
+        - lang: cURL
+          label: 'Company name'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/water-discharges/registration.json" \
+            --data-urlencode "name-search=Water Services"
+        - lang: cURL
+          label: 'Distance from location'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/water-discharges/registration.json" \
+            --data-urlencode easting=623719 \
+            --data-urlencode northing=309247 \
+            --data-urlencode dist=10
+        - lang: cURL
+          label: 'Address within local authority'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/water-discharges/registration.json" \
+            --data-urlencode "address-search=Station Road" \
+            --data-urlencode local-authority=Wigan
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+        - $ref: '#/components/parameters/nameParam'
+        - $ref: '#/components/parameters/nameNumberParam'
+        - $ref: '#/components/parameters/addressParam'
+        - $ref: '#/components/parameters/eastingParam'
+        - $ref: '#/components/parameters/northingParam'
+        - $ref: '#/components/parameters/distParam'
+        - $ref: '#/components/parameters/localAuthorityParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - $ref: '#/components/parameters/exactNameParam'
+        - $ref: '#/components/parameters/registrationNumberParam'
+      responses:
+        '200':
+          description: A list of registrations matching search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/WaterDischargeRegistrationSummary'
+                        - $ref: '#/components/schemas/DistanceSearchResult'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/badParamsResponse'
+        '422':
+          $ref: '#/components/responses/exceededLimitResponse'
+
+  /water-discharges/registration/{id}:
+    get:
+      tags:
+        - Water Discharge Consents
+      description: Fetch all details about a single water discharge consent registration
+      parameters:
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: Details about the registration given by the ID parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/WaterDischargeRegistrationDetail'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+
+
+  /radioactive-substance/registration:
+    get:
+      tags:
+        - Radioactive Substance Permits
+      description: Search the register of Environmental Permitting Regulations – Radioactive Substance Permits
+      x-code-samples:
+        - lang: cURL
+          label: 'Permit holder name'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/radioactive-substance/registration.json" \
+            --data-urlencode name-search=hospital
+        - lang: cURL
+          label: 'Distance from location'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/radioactive-substance/registration.json" \
+            --data-urlencode easting=623719 \
+            --data-urlencode northing=309247 \
+            --data-urlencode dist=50
+        - lang: cURL
+          label: 'Address within a local authority'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/radioactive-substance/registration.json" \
+            --data-urlencode "address-search=Station Road" \
+            --data-urlencode "local-authority=North Norfolk"
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+        - $ref: '#/components/parameters/nameParam'
+        - $ref: '#/components/parameters/nameNumberParam'
+        - $ref: '#/components/parameters/addressParam'
+        - $ref: '#/components/parameters/eastingParam'
+        - $ref: '#/components/parameters/northingParam'
+        - $ref: '#/components/parameters/distParam'
+        - $ref: '#/components/parameters/localAuthorityParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - $ref: '#/components/parameters/exactNameParam'
+        - $ref: '#/components/parameters/registrationNumberParam'
+      responses:
+        '200':
+          description: A list of registrations matching search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/RadioactiveSubstanceRegistrationSummary'
+                        - $ref: '#/components/schemas/DistanceSearchResult'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/badParamsResponse'
+        '422':
+          $ref: '#/components/responses/exceededLimitResponse'
+
+  /radioactive-substance/registration/{id}:
+    get:
+      tags:
+        - Radioactive Substance Permits
+      description: Fetch all details about a single radioactive substance licence
+      parameters:
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: Details about the registration given by the ID parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/RadioactiveSubstanceRegistrationDetail'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+
+  /waste-carriers-brokers/registration:
+    get:
+      tags:
+        - Waste Carriers, Brokers, and Dealers
+      description: >
+        Search the register of Waste Carriers, Brokers, and Dealers.
+      x-code-samples:
+        - lang: curl
+          label: 'Permit holder name'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/waste-carriers-brokers/registration.json" \
+            --data-urlencode name-search=skips
+        - lang: curl
+          label: 'Distance from location'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/waste-carriers-brokers/registration.json" \
+            --data-urlencode easting=623719 \
+            --data-urlencode northing=309247 \
+            --data-urlencode dist=50
+        - lang: curl
+          label: 'Address and town'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/waste-carriers-brokers/registration.json" \
+            --data-urlencode "address-search=station road birmingham"
+        - lang: curl
+          label: 'Registration tier (limited)'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/waste-carriers-brokers/registration.json" \
+            --data-urlencode regime=lower-tier \
+            --data-urlencode _limit=100
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+        - $ref: '#/components/parameters/nameParam'
+        - $ref: '#/components/parameters/nameNumberParam'
+        - $ref: '#/components/parameters/addressParam'
+        - $ref: '#/components/parameters/eastingParam'
+        - $ref: '#/components/parameters/northingParam'
+        - $ref: '#/components/parameters/distParam'
+        - $ref: '#/components/parameters/regimeParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - $ref: '#/components/parameters/exactNameParam'
+        - $ref: '#/components/parameters/registrationNumberParam'
+      responses:
+        '200':
+          description: A list of registrations matching search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/WasteCarrierBrokerRegistrationSummary'
+                        - $ref: '#/components/schemas/DistanceSearchResult'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/badParamsResponse'
+        '422':
+          $ref: '#/components/responses/exceededLimitResponse'
+
+  /waste-carriers-brokers/registration/{id}:
+    get:
+      tags:
+        - Waste Carriers, Brokers, and Dealers
+      description: Fetch all details about a single waste carrier, broker, or dealer
+      parameters:
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: Details about the registration given by the ID parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/WasteCarrierBrokerRegistrationDetail'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+
+  /waste-exemptions/registration:
+    get:
+      tags:
+         - Waste Exemptions
+      description: Search the register of waste exemptions
+      x-code-samples:
+        - lang: curl
+          label: 'Exemption holder name'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/waste-exemptions/registration.json" \
+            --data-urlencode "name-search=recycling centre"
+        - lang: curl
+          label: 'Distance from location'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/waste-exemptions/registration.json" \
+            --data-urlencode easting=623719 \
+            --data-urlencode northing=309247 \
+            --data-urlencode dist=50
+        - lang: curl
+          label: 'Street address and town'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/waste-exemptions/registration.json" \
+            --data-urlencode "address-search=station road birmingham"
+        - lang: curl
+          label: 'Filter by exepmption type'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/waste-exemptions/registration.json" \
+            --data-urlencode address-search=Northumberland \
+            --data-urlencode exemptionCode=T20
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+        - $ref: '#/components/parameters/nameParam'
+        - $ref: '#/components/parameters/nameNumberParam'
+        - $ref: '#/components/parameters/addressParam'
+        - $ref: '#/components/parameters/eastingParam'
+        - $ref: '#/components/parameters/northingParam'
+        - $ref: '#/components/parameters/distParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - $ref: '#/components/parameters/exactNameParam'
+        - $ref: '#/components/parameters/registrationNumberParam'
+        - name: exemptionCode
+          in: query
+          description: |
+            Code representing a specific type of exemption
+            | Code | Description |
+            |------|-------------|
+            | D1 | Depositing waste from dredging inland waters |
+            | D2 | Depositing waste from a railway sanitary convenience |
+            | D3 | Depositing waste from a portable sanitary convenience |
+            | D4 | Depositing agricultural waste consisting of plant tissue under a Plant Health Notice |
+            | D5 | Depositing waste samples for testing or analysis |
+            | D6 | Disposal by incineration |
+            | D7 | Burning waste in the open |
+            | D8 | Burning waste at a port under a Plant Health Notice |
+            | S1 | Storing waste in secure containers |
+            | S2 | Storing waste in a secure place |
+            | S3 | Storing sludge |
+            | T1 | Cleaning, washing, spraying or coating relevant waste |
+            | T10 | Sorting mixed waste |
+            | T11 | Repairing or refurbishing waste electrical and electronic equipment (WEEE) |
+            | T12 | Manually treating waste |
+            | T13 | Treating waste food |
+            | T14 | Crushing and emptying vehicle waste oil filters |
+            | T15 | Treating waste aerosol cans |
+            | T16 | Treating waste toner and ink cartridges |
+            | T17 | Crushing waste fluorescent tubes |
+            | T18 | Using flocculants to remove water from waste |
+            | T19 | Physical and chemical treatment of waste edible oil and fat to produce biodiesel |
+            | T2 | Recovering textiles |
+            | T20 | Treating waste at a water treatment works |
+            | T21 | Recovery of waste at a waste water treatment works |
+            | T23 | Aerobic composting and associated prior treatment |
+            | T24 | Anaerobic digestion at premises used for agriculture and burning resulting biogas |
+            | T25 | Anaerobic digestion at premises not used for agriculture and burning resulting biogas |
+            | T26 | Treatment of kitchen waste in a wormery |
+            | T27 | Treatment of sheep dip using organophosphate-degrading enzyme |
+            | T28 | Sort and denature controlled drugs for disposal |
+            | T29 | Treatment of non-hazardous pesticide washings by carbon filtration for disposal |
+            | T30 | Recovery of silver |
+            | T31 | Recovery of monopropylene glycol from aircraft antifreeze fluids |
+            | T32 | Treatment of waste in a biobed or biofilter |
+            | T33 | Recovery of central heating oil by filtration |
+            | T4 | Preparatory treatments (baling, sorting, shredding etc) |
+            | T5 | Screening and blending waste |
+            | T6 | Treating waste wood and waste plant matter by chipping, shredding, cutting or pulverising |
+            | T8 | Mechanically treating end-of-life tyres |
+            | T9 | Recovering scrap metal |
+            | U1 | Use of waste in construction |
+            | U10 | Spreading waste to benefit agricultural land |
+            | U11 | Spreading waste to benefit non-agricultural land |
+            | U12 | Using mulch |
+            | U13 | Spreading plant matter to provide benefits |
+            | U14 | Incorporating ash into soil |
+            | U15 | Spreading of pig and poultry ash |
+            | U16 | Using depolluted end-of-life vehicles for parts |
+            | U2 | Use of baled end-of-life tyres in construction |
+            | U3 | Construction of entertainment or educational installations |
+            | U4 | Burning of waste as a fuel in a small appliance |
+            | U5 | Using biodiesel produced from waste as fuel |
+            | U6 | Using sludge to re-seed a waste water treatment plant |
+            | U7 | Using effluent to clean a highway gravel bed |
+            | U8 | Using waste for a specified purpose |
+            | U9 | Using waste to manufacture finished goods |
+
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of registrations matching search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/WasteExemptionRegistrationSummary'
+                        - $ref: '#/components/schemas/DistanceSearchResult'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/badParamsResponse'
+        '422':
+          $ref: '#/components/responses/exceededLimitResponse'
+
+  /waste-exemptions/registration/{id}:
+    get:
+      tags:
+         - Waste Exemptions
+      description: Fetch all details about a single waste exemption registration
+      parameters:
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: Details about the registration given by the ID parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/WasteExemptionRegistrationDetail'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+
+  /water-discharge-exemptions/registration:
+    get:
+      tags:
+        - Water Quality Exemptions
+      description: Search register of water quality exemptions
+      x-code-samples:
+        - lang: cURL
+          label: 'Distance from location'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/water-discharge-exemptions/registration.json" \
+            --data-urlencode easting=623719 \
+            --data-urlencode northing=309247 \
+            --data-urlencode dist=50
+        - lang: cURL
+          label: 'Address within a local authority'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/water-discharge-exemptions/registration.json" \
+            --data-urlencode address-search=Farm \
+            --data-urlencode "local-authority=Mid Devon"
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+        - $ref: '#/components/parameters/addressParam'
+        - $ref: '#/components/parameters/nameNumberParam'
+        - $ref: '#/components/parameters/localAuthorityParam'
+        - $ref: '#/components/parameters/eastingParam'
+        - $ref: '#/components/parameters/northingParam'
+        - $ref: '#/components/parameters/distParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - $ref: '#/components/parameters/registrationNumberParam'
+      responses:
+        '200':
+          description: A list of registrations matching search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/WaterExemptionRegistrationSummary'
+                        - $ref: '#/components/schemas/DistanceSearchResult'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/badParamsResponse'
+        '422':
+          $ref: '#/components/responses/exceededLimitResponse'
+
+  /water-discharge-exemptions/registration/{id}:
+    get:
+      tags:
+        - Water Quality Exemptions
+      description: Fetch all details about a single water quality exemption registration
+      parameters:
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: Details about the registration given by the ID parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/WaterExemptionRegistrationDetail'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+
+  /scrap-metal-dealers/registration:
+    get:
+      tags:
+        - Scrap Metal Dealers
+      description: Search register of scrap metal dealers
+      x-code-samples:
+        - lang: curl
+          label: 'Collector search by name'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/scrap-metal-dealers/registration.json" \
+            --data-urlencode name-search=johnson \
+            --data-urlencode registrationType=collector
+        - lang: curl
+          label: 'Site search by address'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/scrap-metal-dealers/registration.json" \
+            --data-urlencode "address-search=station road" \
+            --data-urlencode registrationType=site
+        - lang: curl
+          label: 'Local authority'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/scrap-metal-dealers/registration.json" \
+            --data-urlencode local-authority=Lambeth
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+        - $ref: '#/components/parameters/nameParam'
+        - $ref: '#/components/parameters/nameNumberParam'
+        - $ref: '#/components/parameters/addressParam'
+        - $ref: '#/components/parameters/localAuthorityParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - $ref: '#/components/parameters/exactNameParam'
+        - $ref: '#/components/parameters/registrationNumberParam'
+      responses:
+        '200':
+          description: A list of registrations matching search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScrapMetalDealerRegistrationSummary'
+              example:
+                meta:
+                  publisher: Environment Agency
+                  licence: https://www.gov.uk/government/publications/environment-agency-conditional-licence/environment-agency-conditional-licence
+                  documentation: http://environment.data.gov.uk/public-register/view/api-documentation.html
+                  version: '0.2'
+                  comment: Beta service
+                  hasFormat:
+                    - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration.csv?_limit=2
+                    - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration.rdf?_limit=2
+                    - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration.ttl?_limit=2
+                    - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration.html?_limit=2
+                  limit: 2
+                items:
+                  - "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S
+                    expiryDate: '2020-09-12'
+                    holder:
+                      "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/holder/0-birmingham-metal-company
+                      memberOf:
+                        "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/holder/1-birmingham-metal-company
+                        businessName: Birmingham Metal Company
+                      name: Birmingham Metal Company
+                      type: http://xmlns.com/foaf/0.1/Person
+                    localAuthority:
+                      "@id": http://opendatacommunities.org/id/metropolitan-district-council/birmingham
+                      label: Birmingham
+                    notation: E4601-LN/000000667
+                    regime: http://environment.data.gov.uk/public-register/def/regime/scrap-metal-dealer
+                    register:
+                      "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/register
+                      label: Scrap Metal Dealer Licences for England
+                    registrationNumber: LN/000000667
+                    registrationType:
+                      "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/site
+                      label: Site
+                    site:
+                      "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/site/09ea6521a2096269b4912074ec9d10e5
+                      siteAddress:
+                        "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/site/09ea6521a2096269b4912074ec9d10e5/address/0
+                        address: Birmingham Metals Ltd, Garrison Street, Birmingham, West Midlands,
+                          B9 4BN
+                        locality: Birmingham
+                        postcode: B9 4BN
+                        postcodeURI: http://data.ordnancesurvey.co.uk/id/postcodeunit/B94BN
+                        street_address: Birmingham Metals Ltd, Garrison Street
+                    type:
+                      - http://environment.data.gov.uk/public-register/def/registration/Permit
+                      - http://environment.data.gov.uk/public-register/def/registration/RegisterItem
+                  - "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C
+                    expiryDate: '2020-11-21'
+                    holder:
+                      "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C/holder/0-francis-wilkinson
+                      memberOf:
+                        "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C/holder/1-first-choice-scrap-metals
+                        businessName: First Choice Scrap Metals
+                      name: Francis Wilkinson
+                      type: http://xmlns.com/foaf/0.1/Person
+                    localAuthority:
+                      "@id": http://opendatacommunities.org/id/metropolitan-district-council/south-tyneside
+                      label: South Tyneside
+                    notation: E4504-2017-20-18
+                    regime: http://environment.data.gov.uk/public-register/def/regime/scrap-metal-dealer
+                    register:
+                      "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/register
+                      label: Scrap Metal Dealer Licences for England
+                    registrationNumber: 2017-20-18
+                    registrationType:
+                      "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/collector
+                      label: Collector
+                    type:
+                      - http://environment.data.gov.uk/public-register/def/registration/Permit
+                      - http://environment.data.gov.uk/public-register/def/registration/RegisterItem
+
+            application/rdf+xml:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScrapMetalDealerRegistrationSummary'
+              examples:
+                placeholder:
+                  $ref: '#/components/examples/rdfExamplePlaceholder'
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+              examples:
+                placeholder:
+                  $ref: '#/components/examples/turtleExamplePlaceholder'
+            text/csv:
+              schema:
+                type: string
+                format: binary
+              examples:
+                placeholder:
+                  $ref: '#/components/examples/csvExamplePlaceholder'
+
+
+        '400':
+          $ref: '#/components/responses/badParamsResponse'
+        '422':
+          $ref: '#/components/responses/exceededLimitResponse'
+
+  /scrap-metal-dealers/registration/{id}:
+    get:
+      tags:
+        - Scrap Metal Dealers
+      description: Fetch all details about a single scrap metal dealer
+      parameters:
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: Details about the registration given by the ID parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/ScrapMetalDealerRegistrationDetail'
+              examples:
+                site:
+                  summary: Site
+                  value:
+                    meta:
+                      publisher: Environment Agency
+                      licence: https://www.gov.uk/government/publications/environment-agency-conditional-licence/environment-agency-conditional-licence
+                      documentation: http://environment.data.gov.uk/public-register/view/api-documentation.html
+                      version: '0.2'
+                      comment: Beta service
+                      hasFormat:
+                        - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S.rdf
+                        - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S.ttl
+                        - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S.html
+                    items:
+                      - "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S
+                        expiryDate: '2020-09-12'
+                        holder:
+                          "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/holder/0-birmingham-metal-company
+                          hasSite:
+                            "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/site/09ea6521a2096269b4912074ec9d10e5
+                            label: Site for licence "LN/000000667".
+                            permit: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S
+                            registerItem: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S
+                            siteAddress:
+                              "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/site/09ea6521a2096269b4912074ec9d10e5/address/0
+                              extended_address: Birmingham Metals Ltd, Garrison Street, Birmingham, West
+                                Midlands, B9 4BN
+                              label: Site address for licence "LN/000000667".
+                              locality: Birmingham
+                              postal_code: B9 4BN
+                              postcode:
+                                "@id": http://data.ordnancesurvey.co.uk/id/postcodeunit/B94BN
+                              region: West Midlands
+                              street_address: Birmingham Metals Ltd, Garrison Street
+                              type:
+                                "@id": http://www.w3.org/2006/vcard/ns#Address
+                            type:
+                              "@id": http://www.w3.org/ns/org#Site
+                          label: Licensee of Scrap Metal Dealer Licence "LN/000000667".
+                          memberOf:
+                            "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/holder/1-birmingham-metal-company
+                            businessName: Birmingham Metal Company
+                            hasMember: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/holder/0-birmingham-metal-company
+                            hasSite:
+                              "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/site/09ea6521a2096269b4912074ec9d10e5
+                              label: Site for licence "LN/000000667".
+                              permit: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S
+                              registerItem: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S
+                              siteAddress:
+                                "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/site/09ea6521a2096269b4912074ec9d10e5/address/0
+                                extended_address: Birmingham Metals Ltd, Garrison Street, Birmingham, West
+                                  Midlands, B9 4BN
+                                label: Site address for licence "LN/000000667".
+                                locality: Birmingham
+                                postal_code: B9 4BN
+                                postcode:
+                                  "@id": http://data.ordnancesurvey.co.uk/id/postcodeunit/B94BN
+                                region: West Midlands
+                                street_address: Birmingham Metals Ltd, Garrison Street
+                                type:
+                                  "@id": http://www.w3.org/2006/vcard/ns#Address
+                              type:
+                                "@id": http://www.w3.org/ns/org#Site
+                            label: Business holder of Scrap Metal Dealer Licence "LN/000000667".
+                            permit: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S
+                            registerItem: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S
+                            type:
+                              "@id": http://www.w3.org/ns/org#Organization
+                          name: Birmingham Metal Company
+                          permit: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S
+                          registerItem: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S
+                          type:
+                            "@id": http://xmlns.com/foaf/0.1/Person
+                        localAuthority:
+                          "@id": http://opendatacommunities.org/id/metropolitan-district-council/birmingham
+                          altLabel: Birmingham City Council
+                          billingAuthorityCode: E4601
+                          county:
+                            "@id": http://opendatacommunities.org/id/metropolitan-county/west-midlands
+                          governs:
+                            "@id": http://data.ordnancesurvey.co.uk/id/7000000000000018
+                          governsGSS:
+                            "@id": http://statistics.data.gov.uk/id/statistical-geography/E08000025
+                          gssCode: E08000025
+                          hasCensusCode: 00CN
+                          label: Birmingham
+                          openlyLocalUrl:
+                            "@id": http://openlylocal.com/councils/167-Birmingham-City-Council
+                          page:
+                            "@id": http://www.birmingham.gov.uk/
+                          prefLabel: Birmingham
+                          region:
+                            "@id": http://statistics.data.gov.uk/id/government-office-region/F
+                          sameAs:
+                            "@id": http://statistics.data.gov.uk/id/local-authority/00CN
+                          type:
+                            - "@id": http://opendatacommunities.org/def/local-government/CivilAdministrativeAuthority
+                            - "@id": http://opendatacommunities.org/def/local-government/LocalAuthority
+                            - "@id": http://opendatacommunities.org/def/local-government/MetropolitanDistrictCouncil
+                        notation: E4601-LN/000000667
+                        regime:
+                          "@id": http://environment.data.gov.uk/public-register/def/regime/scrap-metal-dealer
+                        register:
+                          "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/register
+                          label: Scrap Metal Dealer Licences for England
+                          type:
+                            "@id": http://environment.data.gov.uk/public-register/def/registration/Register
+                        registrationNumber: LN/000000667
+                        registrationType:
+                          "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/site
+                          comment: TBD
+                          definition: TBD
+                          inScheme:
+                            "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/scheme
+                          label: Site
+                          notation: site
+                          prefLabel: Site
+                          topConceptOf:
+                            "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/scheme
+                          type:
+                            - "@id": http://environment.data.gov.uk/public-register/def/registration/RegistrationType
+                            - "@id": http://www.w3.org/2004/02/skos/core#Concept
+                        site:
+                          "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/site/09ea6521a2096269b4912074ec9d10e5
+                          label: Site for licence "LN/000000667".
+                          permit: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S
+                          registerItem: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S
+                          siteAddress:
+                            "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4601-LN-000000667-S/site/09ea6521a2096269b4912074ec9d10e5/address/0
+                            address: Birmingham Metals Ltd, Garrison Street, Birmingham, West Midlands,
+                              B9 4BN
+                            label: Site address for licence "LN/000000667".
+                            locality: Birmingham
+                            postcode: B9 4BN
+                            postcodeURI:
+                              "@id": http://data.ordnancesurvey.co.uk/id/postcodeunit/B94BN
+                            region: West Midlands
+                            street_address: Birmingham Metals Ltd, Garrison Street
+                            type:
+                              "@id": http://www.w3.org/2006/vcard/ns#Address
+                          type:
+                            "@id": http://www.w3.org/ns/org#Site
+                        type:
+                          - "@id": http://environment.data.gov.uk/public-register/def/registration/Permit
+                          - "@id": http://environment.data.gov.uk/public-register/def/registration/RegisterItem
+                collector:
+                  summary: Collector
+                  value:
+                    meta:
+                      publisher: Environment Agency
+                      licence: https://www.gov.uk/government/publications/environment-agency-conditional-licence/environment-agency-conditional-licence
+                      documentation: http://environment.data.gov.uk/public-register/view/api-documentation.html
+                      version: '0.2'
+                      comment: Beta service
+                      hasFormat:
+                        - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C.rdf
+                        - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C.ttl
+                        - http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C.html
+                    items:
+                      - "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C
+                        expiryDate: '2020-11-21'
+                        holder:
+                          "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C/holder/0-francis-wilkinson
+                          label: Licensee of Scrap Metal Dealer Licence "2017-20-18".
+                          memberOf:
+                            "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C/holder/1-first-choice-scrap-metals
+                            businessName: First Choice Scrap Metals
+                            hasMember: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C/holder/0-francis-wilkinson
+                            label: Business holder of Scrap Metal Dealer Licence "2017-20-18".
+                            permit: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C
+                            registerItem: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C
+                            type:
+                              "@id": http://www.w3.org/ns/org#Organization
+                          name: Francis Wilkinson
+                          permit: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C
+                          registerItem: http://environment.data.gov.uk/public-register/scrap-metal-dealers/registration/E4504-2017-20-18-C
+                          type:
+                            "@id": http://xmlns.com/foaf/0.1/Person
+                        localAuthority:
+                          "@id": http://opendatacommunities.org/id/metropolitan-district-council/south-tyneside
+                          altLabel: South Tyneside Council
+                          billingAuthorityCode: E4504
+                          county:
+                            "@id": http://opendatacommunities.org/id/metropolitan-county/tyne-and-wear
+                          governs:
+                            "@id": http://data.ordnancesurvey.co.uk/id/7000000000009685
+                          governsGSS:
+                            "@id": http://statistics.data.gov.uk/id/statistical-geography/E08000023
+                          gssCode: E08000023
+                          hasCensusCode: 00CL
+                          label: South Tyneside
+                          page:
+                            "@id": http://www.southtyneside.info/
+                          prefLabel: South Tyneside
+                          region:
+                            "@id": http://statistics.data.gov.uk/id/government-office-region/A
+                          sameAs:
+                            "@id": http://statistics.data.gov.uk/id/local-authority/00CL
+                          type:
+                            - "@id": http://opendatacommunities.org/def/local-government/CivilAdministrativeAuthority
+                            - "@id": http://opendatacommunities.org/def/local-government/LocalAuthority
+                            - "@id": http://opendatacommunities.org/def/local-government/MetropolitanDistrictCouncil
+                        notation: E4504-2017-20-18
+                        regime:
+                          "@id": http://environment.data.gov.uk/public-register/def/regime/scrap-metal-dealer
+                        register:
+                          "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/register
+                          label: Scrap Metal Dealer Licences for England
+                          type:
+                            "@id": http://environment.data.gov.uk/public-register/def/registration/Register
+                        registrationNumber: 2017-20-18
+                        registrationType:
+                          "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/collector
+                          comment: TBD
+                          definition: TBD
+                          inScheme:
+                            "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/scheme
+                          label: Collector
+                          notation: collector
+                          prefLabel: Collector
+                          topConceptOf:
+                            "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/scheme
+                          type:
+                            - "@id": http://environment.data.gov.uk/public-register/def/registration/RegistrationType
+                            - "@id": http://www.w3.org/2004/02/skos/core#Concept
+                        type:
+                          - "@id": http://environment.data.gov.uk/public-register/def/registration/Permit
+                          - "@id": http://environment.data.gov.uk/public-register/def/registration/RegisterItem
+
+            application/rdf+xml:
+              schema:
+                type: object
+              examples:
+                placeholder:
+                  $ref: '#/components/examples/rdfExamplePlaceholder'
+
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+              examples:
+                placeholder:
+                  $ref: '#/components/examples/turtleExamplePlaceholder'
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+
+
+  /enforcement-action/registration:
+    get:
+      tags:
+        - Enforcement Actions
+      description: Search register of enforecement actions
+      x-code-samples:
+        - lang: curl
+          label: 'Offender name and agency function'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/enforcement-action/registration.json" \
+            --data-urlencode "name-search=smith" \
+            --data-urlencode "agencyFunction=http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/waste"
+        - lang: curl
+          label: 'Offence type'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/enforcement-action/registration.json" \
+            --data-urlencode "offenceType=ENVIRONMENTAL PERMITTING (E & W) REGULATIONS 2010"
+        - lang: curl
+          label: 'Action type between dates'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/enforcement-action/registration.json" \
+            --data-urlencode "actionType=http://environment.data.gov.uk/public-register/enforcement-action/def/action-type/caution" \
+            --data-urlencode "after=01/01/2018" \
+            --data-urlencode "before=01/01/2019"
+      parameters:
+        - $ref: '#/components/parameters/nameParam'
+        - name: actionType
+          in: query
+          required: false
+          description: |
+            URI that identifies the type of enforcement action taken. Valid only for the enforcement actions register.
+            Multiple values will return all actions of either type.
+            
+            | URI | Description |
+            |-----|-------------|
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/action-type/caution | Caution |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/action-type/court-case | Court Case |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/action-type/enforcement-notice | Enforcement Notice |
+
+          schema:
+            $ref: '#/components/schemas/EnforcementActionType'
+        - name: offenceType
+          in: query
+          required: false
+          description: >
+            The title or an common abbreviation of the title of a legislation (primary or secondary) associated a
+            register item (typically the title of legislation that defines the offence against which an enforcement
+            action is being taken).
+
+          schema:
+            $ref: '#/components/schemas/OffenceLegislation'
+        - name: agencyFunction
+          in: query
+          required: false
+          description: |
+            The function within the Environment Agency associated with an enforcement action
+            
+            | URI | Description |
+            |-----|-------------|
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/em | EM |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/em-waste | EM, Waste |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/em-waste-wq-wr | EM, Waste, WQ, WR |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/em-wq | EM, WQ |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/fisheries | Fisheries |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/flood | Flood |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/flood-defence | Flood Defence |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/flood-waste | Flood, Waste |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/hife-wq | HIFE, WQ |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/ippc | IPPC |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/nav | NAV |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/process-industry-regulation | Process Industry Regulation |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/radio-active-substances-regulation | Radio Active Substances Regulation |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/rsr | RSR |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/waste | Waste |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/waste-wq | Waste, WQ |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/water-quality | Water Quality |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/water-resources | Water Resources |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/wq | WQ |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/wq-wr | WQ, WR |
+            | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/wr | WR |
+
+          schema:
+            $ref: '#/components/schemas/EnforcementAgencyFunction'
+        - name: after
+          in: query
+          required: false
+          description: |
+            Search for enforcement actions that occurred after the given date. Valid only for the enforcement actions register.
+            May be used in conjunction with the `before` parameter to search within a date range.
+          schema:
+            $ref: '#/components/schemas/DateParam'
+        - name: before
+          in: query
+          required: false
+          description: |
+            Search for enforcement actions that occurred before the given date. Valid only for the enforcement actions register.
+            May be used in conjunction with the `after` parameter to search within a date range.
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/DateParam'
+              - type: string
+                example: 01/01/2022
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - $ref: '#/components/parameters/exactNameParam'
+      responses:
+        '200':
+          description: A list of registrations matching search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EnforcementActionSummary'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/badParamsResponse'
+        '422':
+          $ref: '#/components/responses/exceededLimitResponse'
+
+  /enforcement-action/registration/{id}:
+    get:
+      tags:
+        - Enforcement Actions
+      description: Fetch all details about a single enforcement action
+      parameters:
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: Details about the action specified by the ID parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/EnforcementActionDetail'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+
+
+
+  /flood-risk-exemptions/registration:
+    get:
+      tags:
+        - Flood Risk Activity Exemptions
+      description: Search the register of flood risk activity exemptions
+      x-code-samples:
+        - lang: curl
+          label: 'Operator name'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/flood-risk-exemptions/registration.json" \
+            --data-urlencode "name-search=construction"
+        - lang: cURL
+          label: 'Distance from location'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/flood-risk-exemptions/registration.json" \
+            --data-urlencode easting=623719 \
+            --data-urlencode northing=309247 \
+            --data-urlencode dist=50
+        - lang: cURL
+          label: 'Exemption within local authority'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/flood-risk-exemptions/registration.json" \
+            --data-urlencode "local-authority=Bristol, City of" \
+            --data-urlencode exemptionCode=FRA6
+        - lang: curl
+          label: 'Water management area'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/flood-risk-exemptions/registration.json" \
+            --data-urlencode "water-management-area-search=West Thames"
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+        - $ref: '#/components/parameters/nameParam'
+        - $ref: '#/components/parameters/nameNumberParam'
+        - $ref: '#/components/parameters/eastingParam'
+        - $ref: '#/components/parameters/northingParam'
+        - $ref: '#/components/parameters/distParam'
+        - $ref: '#/components/parameters/localAuthorityParam'
+        - name: exemptionCode
+          in: query
+          description: |
+            Code representing a specific type of exemption
+            
+            | Code | Description |
+            |------|-------------|
+            | FRA2 | Electrical cable service crossing over a main river |
+            | FRA3 | Service crossing below the bed of a main river not involving an open cut technique&nbsp; |
+            | FRA4 | Service crossings attached to the outside of existing structures over a main river |
+            | FRA5 | Footbridge over a main river not more than 8m wide from bank to bank |
+            | FRA6 | Temporary scaffolding in or over a main river for no more than 4 weeks |
+            | FRA7 | Temporary dewatering of a work area for no more than 4 weeks |
+            | FRA8 | Maintaining a raised river defence or sea defence&nbsp; |
+            | FRA9 | Maintaining structures within the channel of a main river that are not raised defences&nbsp; |
+            | FRA10 | Constructing drinking bays for livestock on the bank of a main river |
+            | FRA11 | Constructing a small access platform on the bank of a river or that projects into or over a main river |
+            | FRA12 | Outfall pipes less than 300mm diameter through a headwall |
+            | FRA13 | Repairing and protecting up to 10m of main river banks using natural materials |
+            | FRA14 | Repairing bank slips and erosion using the fallen materials&nbsp; |
+            | FRA15 | Installing channel habitat structures made of natural materials excluding weirs and berms |
+            | FRA16 | Installing temporary small rafts for surveys&nbsp; |
+            | FRA17 | Gravel-cleaning for fish spawning beds |
+            | FRA18 | Placing stones or logs in a main river to enhance habitats |
+            | FRA19 | Constructing eel pass devices on existing structures |
+            | FRA20 | Constructing fish passage notches in an existing impounding structure |
+            | FRA21 | Removing silt and sand from bridge arches and any material from existing culverts |
+            | FRA22 | Removing silt and sand adjacent to in-river structures&nbsp; |
+            | FRA23 | Dredging to remove accumulated silt and sand from the bed of up to 1.5km of man-made ditches, land drains, agricultural drains and previously straightened watercourses that are main rivers |
+            | FRA24 | Dredging to remove accumulated silt and sand from the bed of up to 20m of a main river |
+            | FRA25 | Excavating scrapes and shallow wetland features totalling 0.1ha in a flood plain |
+            | FRA26 | Constructing raised flood defences around a maximum of 6 adjoining properties&nbsp; |
+            | FRA27 | Constructing bankside wildlife refuge structures |
+            | FRA28 | Improvement works for existing tracks and paths |
+
+          required: false
+          schema:
+            type: string
+            enum:
+              - FRA2
+              - FRA3
+              - FRA4
+              - FRA5
+              - FRA6
+              - FRA7
+              - FRA8
+              - FRA9
+              - FRA10
+              - FRA11
+              - FRA12
+              - FRA13
+              - FRA14
+              - FRA15
+              - FRA16
+              - FRA17
+              - FRA18
+              - FRA19
+              - FRA20
+              - FRA21
+              - FRA22
+              - FRA23
+              - FRA24
+              - FRA25
+              - FRA26
+              - FRA27
+              - FRA28
+        - name: water-management-area-search
+          in: query
+          description: >
+            Water management area where the work that this permit applies to takes place
+          schema:
+            type: string
+            enum:
+              - West Thames
+              - Kent and South London
+              - Staffordshire Warwickshire and West Midlands
+              - Derbyshire Nottinghamshire and Leicestershire
+              - Cambridgeshire and Bedfordshire
+              - Lincolnshire and Northamptonshire
+              - Hertfordshire and North London
+              - Cumbria and Lancashire
+              - Devon and Cornwall
+              - Northumberland Durham and Tees
+              - Solent and South Downs
+              - Essex Norfolk and Suffolk
+              - Outside England
+              - Yorkshire
+              - Greater Manchester Merseyside and Cheshire
+              - Shropshire Herefordshire Worcestershire and Gloucestershire
+              - Wesse
+
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - $ref: '#/components/parameters/exactNameParam'
+        - $ref: '#/components/parameters/registrationNumberParam'
+      responses:
+        '200':
+          description: A list of registrations matching search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/FloodRiskExemptionRegistrationSummary'
+                        - $ref: '#/components/schemas/DistanceSearchResult'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/badParamsResponse'
+        '422':
+          $ref: '#/components/responses/exceededLimitResponse'
+
+  /flood-risk-exemptions/registration/{id}:
+    get:
+      tags:
+        - Flood Risk Activity Exemptions
+      description: Fetch all details about a single flood risk exemption registration
+      parameters:
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: Details about the registration given by the ID parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/Metadata'
+                  items:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/FloodRiskExemptionRegistrationDetail'
+            application/rdf+xml:
+              schema:
+                type: object
+            text/turtle:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+
+  /downloads/waste-operations:
+    get:
+      tags:
+        - Waste Operations
+      description: Download the entire register in CSV format
+      responses:
+        200:
+          $ref: '#/components/responses/OkDownloadResponse'
+
+  /downloads/end-of-life-vehicles:
+    get:
+      tags:
+        - End of Life Vehicles
+      description: Download the entire register in CSV format
+      responses:
+        200:
+          $ref: '#/components/responses/OkDownloadResponse'
+
+
+  /downloads/industrial-installations:
+    get:
+      tags:
+        - Industrial Installations
+      description: Download the entire register in CSV format
+      responses:
+        200:
+          $ref: '#/components/responses/OkDownloadResponse'
+
+
+  /downloads/water-discharges:
+    get:
+      tags:
+        - Water Discharge Consents
+      description: Download the entire register in CSV format
+      responses:
+        200:
+          $ref: '#/components/responses/OkDownloadResponse'
+
+
+  /downloads/radioactive-substance:
+    get:
+      tags:
+        - Radioactive Substance Permits
+      description: Download the entire register in CSV format
+      responses:
+        200:
+          $ref: '#/components/responses/OkDownloadResponse'
+
+
+  /downloads/waste-carriers-brokers:
+    get:
+      tags:
+        - Waste Carriers, Brokers, and Dealers
+      description: Download the entire register in CSV format
+      responses:
+        200:
+          $ref: '#/components/responses/OkDownloadResponse'
+
+
+  /downloads/water-discharge-exemptions:
+    get:
+      tags:
+        - Water Quality Exemptions
+      description: Download the entire register in CSV format
+      responses:
+        200:
+          $ref: '#/components/responses/OkDownloadResponse'
+
+
+  /downloads/waste-exemptions:
+    get:
+      tags:
+         - Waste Exemptions
+      description: Download the entire register in CSV format
+      responses:
+        200:
+          $ref: '#/components/responses/OkDownloadResponse'
+
+
+  /downloads/scrap-metal-dealers:
+    get:
+      tags:
+        - Scrap Metal Dealers
+      description: Download the entire register in CSV format
+      responses:
+        200:
+          $ref: '#/components/responses/OkDownloadResponse'
+
+
+  /downloads/enforcement-action:
+    get:
+      tags:
+        - Enforcement Actions
+      description: Download the entire register in CSV format
+      responses:
+        200:
+          $ref: '#/components/responses/OkDownloadResponse'
+
+
+  /downloads/flood-risk-exemptions:
+    get:
+      tags:
+        - Flood Risk Activity Exemptions
+      description: Download the entire register in CSV format
+      responses:
+        200:
+          $ref: '#/components/responses/OkDownloadResponse'
+
+  /api/search:
+   get:
+     tags:
+       - Cross Register
+     summary: Search all registers
+     description: |
+       List registration/permit entries which match some search criteria across all registers.
+       Note that:
+       * Enforcement actions will not appear in the results; please use the enforcement actions endpoint instead
+       * Some parameters are not applicable to certain registers; check the parameter description for usage
+     x-code-samples:
+       - lang: curl
+         label: 'Name containing substring'
+         source: |
+           curl -G \
+           "https://environment.data.gov.uk/public-register/api/search.json" \
+           --data-urlencode name-search=*th
+       - lang: curl
+         label: 'Exact name match'
+         source: |
+           curl -G \
+           "https://environment.data.gov.uk/public-register/api/search.json" \
+           --data-urlencode "name=John Smith"
+       - lang: curl
+         label: 'Partial name and ID'
+         source: |
+           curl -G \
+           "https://environment.data.gov.uk/public-register/api/search.json" \
+           --data-urlencode name-search=smith \
+           --data-urlencode number-search=TH
+       - lang: curl
+         label: 'Match name or ID'
+         source: |
+           curl -G \
+           "https://environment.data.gov.uk/public-register/api/search.json" \
+           --data-urlencode name-number-search=TH
+       - lang: curl
+         label: 'First 100 matching IDs'
+         source: |
+           curl -G \
+           "https://environment.data.gov.uk/public-register/api/search.json" \
+           --data-urlencode number-search=WEX \
+           --data-urlencode _limit=100
+       - lang: curl
+         label: 'Next 100 matching IDs'
+         source: |
+           curl -G \
+           "https://environment.data.gov.uk/public-register/api/search.json" \
+           --data-urlencode number-search=WEX \
+           --data-urlencode _limit=100 \
+           --data-urlencode _offset=100
+       - lang: curl
+         label: 'Address within distance of location'
+         source: |
+           curl -G \
+           "https://environment.data.gov.uk/public-register/api/search.json" \
+           --data-urlencode "address-search=industrial estate" \
+           --data-urlencode easting=623719 \
+           --data-urlencode northing=309247 \
+           --data-urlencode dist=10
+
+     parameters:
+       - $ref: '#/components/parameters/idParam'
+       - $ref: '#/components/parameters/nameParam'
+       - $ref: '#/components/parameters/nameNumberParam'
+       - allOf:
+         - $ref: '#/components/parameters/addressParam'
+         - description: |
+             Full or partial address of the business or individual registered.
+             Note that the following registrations do not have addresses and won't be included in results:
+             * Scrap metal dealers (collectors only)
+             * Enforcement actions
+             * Flood risk activity exemptions
+       - allOf:
+         - $ref: '#/components/parameters/eastingParam'
+         - description: |
+             Easting of OS grid point to search by distance radius.
+             Must be used with `northing` and `dist`.
+             Not applicable to:
+             * Scrap metal dealers
+             * Enforcement actions
+       - allOf:
+         - $ref: '#/components/parameters/northingParam'
+         - description: |
+             Northing of OS grid point to search by distance radius.
+             Must be used with `easting` and `dist`.
+             Not applicable to:
+             * Scrap metal dealers
+             * Enforcement actions
+       - allOf:
+         - $ref: '#/components/parameters/distParam'
+         - description: |
+             Distance in km from the given OS grid point to search within.
+             Must be used with `easting` and `northing` to specify the search center.
+             If left empty, the default value will be used
+             Not applicable to:
+             * Scrap metal dealers
+             * Enforcement actions
+       - $ref: '#/components/parameters/limitParam'
+       - $ref: '#/components/parameters/offsetParam'
+       - $ref: '#/components/parameters/exactNameParam'
+       - $ref: '#/components/parameters/registrationNumberParam'
+     responses:
+       '200':
+         $ref: '#/components/responses/searchAllResponse'
+       '400':
+         description: |
+           ## Bad request
+           Please check the request parameters to ensure that if any of the following parameters are given, they must all be given:
+            * `dist`
+            * `easting`
+            * `northing`
+       '422':
+         $ref: '#/components/responses/exceededLimitResponse'
+  /api/completion:
+    get:
+      tags:
+        - Cross Register
+      summary: Find matching names or permit numbers
+      description: |
+        In addition to the search and retrieval facilities then some simple APIs are provided to assist with UI construction.
+        These take a partial word fragment and return a list of names or registration numbers that contain the fragment.
+        Since these are not retrieval APIs, and not part of the default presentation, they do not support the full range of content negotiation and metadata.
+        They simply return a JSON array of strings containing the available completions.
+      x-code-samples:
+        - lang: curl
+          label: 'Name completion'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/api/completion.json" \
+            --data-urlencode "name=John Smit"
+        - lang: curl
+          label: 'Name substring match'
+          source: |
+            curl -v -G \
+            "https://environment.data.gov.uk/public-register/api/completion.json" \
+            --data-urlencode "name=ohn Smit" \
+            --data-urlencode infix
+        - lang: curl
+          label: 'ID completion'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/api/completion.json" \
+            --data-urlencode number=CBDL
+        - lang: curl
+          label: 'ID substring match'
+          source: |
+            curl -G \
+            "https://environment.data.gov.uk/public-register/api/completion.json" \
+            --data-urlencode number=BDL \
+            --data-urlencode infix
+      parameters:
+        - name: name
+          in: query
+          required: false
+          description: Partial name of to be matched with permit holder names across all registers. If the `infix` flag is not given, the response will include only names starting with the query string
+          schema:
+            type: string
+        - name: number
+          in: query
+          required: false
+          description: |
+            Partial registration number of to be matched with registratiosn across all registers.
+            If the `infix` flag is not given, the response will include only numbers starting with the query string.
+            
+            Just like with the `number-search` parameter on other endpoints, search terms ending with a numeral will be
+            treated as exact matches instead of a prefix. Even with the use of `infix`, a search for `BC1` will not return
+            `BC123`, though it will match `ABC1`.
+          schema:
+            type: string
+        - name: infix
+          in: query
+          required: false
+          description: |
+            If included in the request, the response will include all names or numbers that include the search term as a
+            substring, instead of just those that begin with the search term. Note that no value should be included for this parameter
+          schema:
+            type: boolean
+            enum:
+              - true
+          allowEmptyValue: true
+      responses:
+        '200':
+          description: A list of names or numbers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              examples:
+                nameComplete:
+                  summary: Name completion
+                  value: ["David John Smith", "JOHN SMITH", "JOHN SMITH & SONS LIMITED", "John Smith Transport Ltd"]
+                idComplete:
+                  summary: ID completion
+                  value: ["CBDL1", "CBDL100", "CBDL1000", "CBDL100011", "CBDL100015"]
+        '400':
+          description: Bad request. Please check that at least one of the `name` or `number` parameters is given
+
