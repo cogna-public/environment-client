@@ -19,15 +19,28 @@ uv pip install environment-client
 ```python
 import asyncio
 from environment.flood_monitoring import FloodClient
+from environment.public_register import PublicRegisterClient
 
 
 async def main():
     """
-    An example of how to use the FloodClient to get flood warnings.
+    An example of how to use the clients to get data from the APIs.
     """
-    async with FloodClient() as client:
-        flood_warnings = await client.get_flood_warnings()
+    async with (
+        FloodClient() as flood_client,
+        PublicRegisterClient() as public_register_client,
+    ):
+        # Get flood warnings
+        flood_warnings = await flood_client.get_flood_warnings()
         print(f"Found {len(flood_warnings)} flood warnings.")
+        
+        # Search for waste operations registrations
+        waste_operations = await public_register_client.get_waste_operations(limit=5)
+        print(f"Found {len(waste_operations.items)} waste operations.")
+        
+        # Search across all registers
+        all_registrations = await public_register_client.search_all_registers(name_search="Limited", limit=5)
+        print(f"Found {len(all_registrations.items)} registrations with 'Limited' in the name.")
 
 
 if __name__ == "__main__":
@@ -42,6 +55,7 @@ if __name__ == "__main__":
 - Hydrology
 - Rainfall
 - Water Quality Data Archive (WQA)
+- Public Register (waste operations, end-of-life vehicles, industrial installations, water discharges, radioactive substances, waste carriers/brokers, waste exemptions, water discharge exemptions, scrap metal dealers, enforcement actions, flood risk exemptions)
 
 ## Package Name vs Import Path 🔤
 

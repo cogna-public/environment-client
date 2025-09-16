@@ -68,12 +68,12 @@ class Asset(BaseModel):
     protectionType: Optional[ProtectionType] = None
     targetCondition: Optional[PrefLabel] = None
     waterCourseName: Optional[str] = None
-    actualDcl: Optional[float] = None
-    actualUcl: Optional[float] = None
+    actualDcl: Optional[Union[float, List[float]]] = None
+    actualUcl: Optional[Union[float, List[float]]] = None
     assetLength: Optional[Union[float, List[float]]] = None
     bank: Optional[dict] = None
-    designDcl: Optional[float] = None
-    designUcl: Optional[float] = None
+    designDcl: Optional[Union[float, List[float]]] = None
+    designUcl: Optional[Union[float, List[float]]] = None
     currentSop: Optional[float] = None
     description: Optional[str] = None
     status: Optional[str] = None
