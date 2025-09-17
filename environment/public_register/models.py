@@ -134,14 +134,14 @@ class RegistrationSummary(GenericRegistrationSummary):
     registration_type: Optional[RegistrationType] = Field(
         None, alias="registrationType"
     )
-    site: Optional[Site] = None
+    site: Optional[Union[Site, List[Site]]] = None
     tier: Optional[Tier] = None
     distance: Optional[float] = None
 
 
 class RegistrationDetail(GenericRegistrationDetail):
     label: Optional[str] = None
-    notation: Optional[List[str]] = None
+    notation: Optional[str] = None
     expiry_date: Optional[str] = Field(None, alias="expiryDate")
     registration_date: Optional[str] = Field(None, alias="registrationDate")
     registration_type: Optional[RegistrationType] = Field(
