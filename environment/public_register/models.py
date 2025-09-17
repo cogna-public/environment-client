@@ -113,8 +113,13 @@ class RDFType(PublicRegisterModel):
 
 class GenericRegistration(PublicRegisterModel):
     id: str = Field(..., alias="@id")
-    register: Register
+    register_: Register = Field(..., alias="register")
     registration_number: Union[str, int] = Field(..., alias="registrationNumber")
+
+    @property
+    def register(self) -> Register:
+        """Expose the register field without shadowing BaseModel.register."""
+        return self.register_
 
 
 class GenericRegistrationSummary(GenericRegistration):
