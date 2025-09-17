@@ -146,24 +146,27 @@ This project uses `uv` for dependency management.
 
 ## Releasing 🚀
 
-- Bump version in `pyproject.toml` (PEP 440).
-- Commit and push to `main`.
-- Create a GitHub Release for tag `vX.Y.Z` in `cogna-public/environment-client` (the tag can be created in the Release UI).
-- The GitHub Actions workflow builds wheels/sdist with `uv build` and publishes to PyPI via Trusted Publishing (no token required).
+1. Run `uv version --bump <patch|minor|major>`.
+2. Verify `pyproject.toml` and `uv.lock` both updated (`uv` edits them automatically).
+3. `git add pyproject.toml uv.lock && git commit -m "publish: bump to vX.Y.Z"`.
+4. `git push origin main` and `git push origin vX.Y.Z`.
+5. `gh release create vX.Y.Z --title "vX.Y.Z" --notes "Release vX.Y.Z"`.
+
+GitHub Actions will build the artifacts and publish to PyPI once the release is published (Trusted Publishing, no token required).
 
 Quick release with Just
 
-Use the Justfile recipe to bump, tag, push, and create the GitHub Release:
+Use the Justfile recipe to perform all the above steps in one go. Example invocations:
 
 ```
 just release                # bump patch
 just release minor          # bump minor
-just release major "Notes"  # bump major with release notes
+just release major "Notes"  # bump major with custom notes
 ```
 
 Notes
 - Requires `gh` CLI authenticated (`gh auth status`).
-- Uses `uv version --bump` to update `pyproject.toml` and tags `vX.Y.Z`.
+- The recipe runs `uv version --bump`, commits `pyproject.toml` and `uv.lock`, pushes `main`, tags `vX.Y.Z`, and creates the GitHub release.
 
 Links
 - PyPI project page: https://pypi.org/project/environment-client/
