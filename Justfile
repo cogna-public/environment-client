@@ -40,7 +40,7 @@ release bump="patch" notes="":
 	# Bump version using uv
 	uv version --bump {{bump}}
 	# Extract new version from pyproject.toml
-	new_version=$(rg -n '^version\s*=\s*"([^"]+)"' -or '$1' pyproject.toml | head -n1)
+	new_version=$(rg '^version\s*=\s*"([^"]+)"' -or '$1' pyproject.toml | head -n1)
 	# Commit and push
 	git add pyproject.toml uv.lock
 	git commit -m "publish: bump to v${new_version}" || echo "No changes to commit"
