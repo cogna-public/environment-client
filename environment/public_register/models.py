@@ -54,7 +54,7 @@ class Address(PublicRegisterModel):
     address: str
     postcode: Optional[Union[str, int]] = None
     organization_name: Optional[str] = Field(None, alias="organization_name")
-    street_address: Optional[str] = Field(None, alias="street_address")
+    street_address: Optional[Union[str, int]] = Field(None, alias="street_address")
     locality: Optional[str] = None
 
 
