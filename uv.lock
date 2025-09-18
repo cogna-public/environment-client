@@ -49,7 +49,7 @@ wheels = [
 
 [[package]]
 name = "environment-client"
-version = "0.5.5"
+version = "0.5.11"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
