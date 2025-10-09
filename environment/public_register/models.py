@@ -30,7 +30,7 @@ class Register(PublicRegisterModel):
 
 class Holder(PublicRegisterModel):
     id: str = Field(..., alias="@id")
-    name: str
+    name: Union[str, List[str]]
     trading_name: Optional[str] = Field(None, alias="tradingName")
 
 
@@ -51,10 +51,10 @@ class PostcodeReference(PublicRegisterModel):
 
 
 class Address(PublicRegisterModel):
-    address: str
+    address: Union[str, List[str]]
     postcode: Optional[Union[str, int]] = None
     organization_name: Optional[str] = Field(None, alias="organization_name")
-    street_address: Optional[Union[str, int]] = Field(None, alias="street_address")
+    street_address: Optional[Union[str, int, List[str]]] = Field(None, alias="street_address")
     locality: Optional[str] = None
 
 
