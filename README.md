@@ -186,8 +186,20 @@ gh release create vX.Y.Z --title "vX.Y.Z" --notes "Release notes"
 
 - **Automatic workflow:** `.github/workflows/auto-version.yml` bumps patch on every merge to main
 - **Publishing workflow:** `.github/workflows/publish.yml` publishes to PyPI when releases are created
-- **No tokens needed:** Uses GitHub's Trusted Publishing for PyPI
+- **Trusted Publishing:** Uses GitHub's OIDC for PyPI (no manual tokens)
+
+### Setup (First Time Only)
+
+To enable automatic PyPI publishing, you need a **Personal Access Token (PAT)**:
+
+1. Create a fine-grained PAT: GitHub Settings → Developer settings → Personal access tokens
+2. Grant it `Contents: Read and write` permission for this repository
+3. Add it as a repository secret named `PAT_TOKEN`
+
+**Why?** GitHub's default token doesn't trigger other workflows. The PAT allows the version bump to trigger PyPI publishing.
+
+**Without PAT:** Version bump still works, but you'll need to manually trigger the publish workflow.
 
 **Links:**
 - PyPI project: https://pypi.org/project/environment-client/
-- Workflow docs: `.github/workflows/README.md`
+- Workflow setup guide: `.github/workflows/README.md`
