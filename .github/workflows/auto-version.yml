@@ -20,13 +20,14 @@ jobs:
     # Skip if commit message starts with "publish:" to avoid loops
     if: "!startsWith(github.event.head_commit.message, 'publish:')"
     env:
-      AUTOMATION_TOKEN: ${{ secrets.PAT_TOKEN != '' && secrets.PAT_TOKEN || github.token }}
+      RELEASE_TOKEN: ${{ secrets.PAT_TOKEN != '' && secrets.PAT_TOKEN || github.token }}
+      PUSH_TOKEN: ${{ github.token }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ env.AUTOMATION_TOKEN }}
+          token: ${{ env.PUSH_TOKEN }}
 
       - name: Set up uv and Python
         uses: astral-sh/setup-uv@v3
@@ -50,8 +51,8 @@ jobs:
 
       - name: Create tag and release
         env:
-          # Use PAT to trigger publish workflow, fallback to default token
-          GH_TOKEN: ${{ env.AUTOMATION_TOKEN }}
+          # Use PAT for release creation so publish workflow triggers; fallback to default token
+          GH_TOKEN: ${{ env.RELEASE_TOKEN }}
         run: |
           git tag "v${NEW_VERSION}"
           git push origin "v${NEW_VERSION}"
