@@ -61,55 +61,22 @@ just release major "Msg"  # bump major (0.5.x → 1.0.0)
 
 Or disable `auto-version.yml` and always use manual releases.
 
-## Setup Requirements
+## Quick Setup
 
-### Personal Access Token (PAT) - REQUIRED
-
-To allow the auto-version workflow to trigger the publish workflow, you need to create a **Personal Access Token**:
-
-1. Go to GitHub Settings → Developer settings → Personal access tokens → **Fine-grained tokens**
-2. Create a new token with:
-   - **Repository access**: Only select `cogna-public/environment-client`
-   - **Repository permissions**:
-     - Contents: Read and write
-     - Metadata: Read-only (automatically selected)
-3. Copy the token
-4. Go to your repository → Settings → Secrets and variables → Actions
-5. Create a new secret named `PAT_TOKEN` with your token
-
-**Why?** GitHub's `GITHUB_TOKEN` doesn't trigger other workflows (security feature). We need a PAT to trigger `publish.yml` after creating a release.
-
-**Fallback:** If `PAT_TOKEN` is not set, the workflow still runs but won't trigger PyPI publishing automatically.
+- Add a fine-grained PAT with `contents: read/write` as the `PAT_TOKEN` repository secret (Actions → Secrets).
+- Keep the `pypi` environment configured for Trusted Publishing (OIDC) if you want review gates.
+- That is all that is required for merges to `main` to build and publish.
 
 ## Workflow Permissions
 
-Both workflows require:
-- `contents: write` - to push commits, tags, and create releases
-- `id-token: write` - for PyPI Trusted Publishing (publish.yml only)
+- `auto-version.yml`: `contents: write` to commit, tag, and release.
+- `publish.yml`: `contents: read`, `id-token: write` for PyPI Trusted Publishing.
 
-## Troubleshooting
+## Troubleshooting Cheatsheet
 
-**Version bump loop:**
-- The workflow checks for `publish:` prefix to skip bot commits
-- If looping occurs, check that the commit message format is correct
-
-**No version bump:**
-- Verify workflow ran (check Actions tab)
-- Review workflow logs for errors
-
-**PyPI publish doesn't trigger:**
-- **Most common:** `PAT_TOKEN` secret is not configured (see Setup Requirements above)
-- Verify the GitHub release was actually published (not a draft)
-- Check that the publish workflow didn't error out (check Actions tab)
-
-**PyPI publish fails:**
-- Ensure Trusted Publishing is configured in PyPI project settings
-- Verify the `pypi` environment exists in GitHub repository settings  
-- Check that the release was actually published (not just created as draft)
-
-**Manual workaround if PAT_TOKEN not set:**
-- The auto-version workflow will still create the tag and release
-- Manually trigger the publish workflow: Go to Actions → Publish → Run workflow → select the tag
+- Version bump skipped? Check the workflow log; the job ignores commits starting with `publish:`.
+- Publish workflow missing? Confirm the release was published and that `PAT_TOKEN` exists.
+- PyPI publish failed? Re-run `Publish` with the saved tag once any OIDC/environment issues are resolved.
 
 ## Testing Changes
 
