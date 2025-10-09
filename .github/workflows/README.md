@@ -63,7 +63,7 @@ Or disable `auto-version.yml` and always use manual releases.
 
 ## Quick Setup
 
-- Add a fine-grained PAT with `contents: read/write` as the `PAT_TOKEN` repository secret (Actions → Secrets).
+- Add a fine-grained PAT with `contents: read/write` as the `PAT_TOKEN` repository secret (Actions → Secrets); it is used for release creation so the publish workflow fires.
 - Keep the `pypi` environment configured for Trusted Publishing (OIDC) if you want review gates.
 - That is all that is required for merges to `main` to build and publish.
 
