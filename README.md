@@ -146,27 +146,48 @@ This project uses `uv` for dependency management.
 
 ## Releasing 🚀
 
-1. Run `uv version --bump <patch|minor|major>`.
-2. Verify `pyproject.toml` and `uv.lock` both updated (`uv` edits them automatically).
-3. `git add pyproject.toml uv.lock && git commit -m "publish: bump to vX.Y.Z"`.
-4. `git push origin main` and `git push origin vX.Y.Z`.
-5. `gh release create vX.Y.Z --title "vX.Y.Z" --notes "Release vX.Y.Z"`.
+### Automatic Releases (Default)
 
-GitHub Actions will build the artifacts and publish to PyPI once the release is published (Trusted Publishing, no token required).
+**Patch versions are released automatically!** Simply merge your PR to `main`:
 
-Quick release with Just
+1. Merge PR to `main`
+2. GitHub Actions automatically:
+   - Bumps patch version (e.g., 0.5.11 → 0.5.12)
+   - Creates git tag and GitHub release
+   - Publishes to PyPI via Trusted Publishing
 
-Use the Justfile recipe to perform all the above steps in one go. Example invocations:
+**No manual steps required!** The workflow uses `uv version --bump patch` automatically.
 
+### Manual Releases (Minor/Major versions)
+
+For **minor** or **major** version bumps, use the Justfile recipe:
+
+```bash
+just release minor          # bump minor (0.5.x → 0.6.0)
+just release major "Notes"  # bump major (0.5.x → 1.0.0)
 ```
-just release                # bump patch
-just release minor          # bump minor
-just release major "Notes"  # bump major with custom notes
+
+**Requirements:**
+- `gh` CLI authenticated (`gh auth status`)
+- The recipe runs `uv version --bump`, commits changes, creates tag, and publishes
+
+**Alternatively, run manually:**
+
+```bash
+uv version --bump minor  # or major
+git add pyproject.toml uv.lock
+git commit -m "publish: bump to vX.Y.Z"
+git push origin main
+git tag vX.Y.Z && git push origin vX.Y.Z
+gh release create vX.Y.Z --title "vX.Y.Z" --notes "Release notes"
 ```
 
-Notes
-- Requires `gh` CLI authenticated (`gh auth status`).
-- The recipe runs `uv version --bump`, commits `pyproject.toml` and `uv.lock`, pushes `main`, tags `vX.Y.Z`, and creates the GitHub release.
+### How It Works
 
-Links
-- PyPI project page: https://pypi.org/project/environment-client/
+- **Automatic workflow:** `.github/workflows/auto-version.yml` bumps patch on every merge to main
+- **Publishing workflow:** `.github/workflows/publish.yml` publishes to PyPI when releases are created
+- **No tokens needed:** Uses GitHub's Trusted Publishing for PyPI
+
+**Links:**
+- PyPI project: https://pypi.org/project/environment-client/
+- Workflow docs: `.github/workflows/README.md`

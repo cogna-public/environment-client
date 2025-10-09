@@ -17,7 +17,8 @@ Note on naming
 - Lint (fix): `just lint`
 - Format: `just format`
 - Example script: `just run-main`
-- Build/Publish: `just publish` (uses `uv build`/`uv publish`)
+- Manual release (minor/major): `just release minor` or `just release major`
+- Note: Patch releases happen automatically on merge to main via GitHub Actions
 
 ## Coding Style & Naming Conventions
 - Python 3.13, 4‑space indents, type hints required in public APIs.
@@ -38,6 +39,14 @@ Note on naming
 - PRs must include: clear description, linked issue (if any), scope of changes, test coverage updates, and notes on VCR cassette changes.
 - Add/adjust tests for new endpoints or models. Update README/AGENTS when behavior or tooling changes.
 
+## Release & Versioning
+- **Automatic**: Patch versions bump automatically on every merge to main (0.5.11 → 0.5.12).
+- **Manual**: Use `just release minor` or `just release major` for larger version bumps.
+- **Workflow**: `.github/workflows/auto-version.yml` handles auto-bumping; `.github/workflows/publish.yml` publishes to PyPI.
+- **Important**: Don't manually edit version in `pyproject.toml`—always use `uv version --bump` or the Just recipe.
+- See `.github/workflows/README.md` for detailed workflow documentation.
+
 ## Security & Configuration Tips
 - No API keys required; clients call public endpoints. Avoid hitting live APIs in CI—use VCR.
-- Respect rate limits when re‑recording cassettes. Do not commit secrets; rely on `uv` for publishing credentials.
+- Respect rate limits when re‑recording cassettes. Do not commit secrets.
+- Publishing uses GitHub's Trusted Publishing (OIDC) to PyPI—no manual tokens needed.
