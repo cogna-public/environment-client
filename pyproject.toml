@@ -5,7 +5,7 @@ requires = [ "hatchling" ]
 
 [project]
 name = "environment-client"
-version = "0.5.14"
+version = "0.5.15"
 description = "Python client for DEFRA's environment.data.gov.uk APIs (typed, async-friendly)"
 readme = "README.md"
 keywords = [
