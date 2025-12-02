@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, List, Optional, Union
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class PublicRegisterModel(BaseModel):
@@ -15,27 +15,27 @@ class Metadata(PublicRegisterModel):
     publisher: str
     licence: str
     documentation: str
-    has_format: Optional[List[str]] = Field(None, alias="hasFormat")
-    version: Optional[str] = None
-    comment: Optional[str] = None
-    limit: Optional[int] = None
-    offset: Optional[int] = None
+    has_format: list[str] | None = Field(None, alias="hasFormat")
+    version: str | None = None
+    comment: str | None = None
+    limit: int | None = None
+    offset: int | None = None
 
 
 class Register(PublicRegisterModel):
     id: str = Field(..., alias="@id")
-    label: Optional[str] = None
-    type: Optional[dict[str, Any]] = None
+    label: str | None = None
+    type: dict[str, Any] | None = None
 
 
 class Holder(PublicRegisterModel):
     id: str = Field(..., alias="@id")
-    name: Union[str, List[str]]
-    trading_name: Optional[str] = Field(None, alias="tradingName")
+    name: str | list[str]
+    trading_name: str | None = Field(None, alias="tradingName")
 
 
 class HolderSummary(Holder):
-    type: Optional[Union[str, List[str]]] = None
+    type: str | list[str] | None = None
 
 
 class HolderTypeReference(PublicRegisterModel):
@@ -43,7 +43,7 @@ class HolderTypeReference(PublicRegisterModel):
 
 
 class HolderDetail(Holder):
-    type: Optional[Union[HolderTypeReference, List[HolderTypeReference]]] = None
+    type: HolderTypeReference | list[HolderTypeReference] | None = None
 
 
 class PostcodeReference(PublicRegisterModel):
@@ -51,28 +51,43 @@ class PostcodeReference(PublicRegisterModel):
 
 
 class Address(PublicRegisterModel):
-    address: Union[str, List[str]]
-    postcode: Optional[Union[str, int]] = None
-    organization_name: Optional[str] = Field(None, alias="organization_name")
-    street_address: Optional[Union[str, int, List[str]]] = Field(None, alias="street_address")
-    locality: Optional[str] = None
+    address: str | list[str]
+    postcode: str | None = None
+    organization_name: str | None = Field(None, alias="organization_name")
+    street_address: str | int | list[str] | None = Field(None, alias="street_address")
+    locality: str | None = None
+
+    @field_validator("postcode", mode="before")
+    @classmethod
+    def ensure_postcode_str(cls, value: Any) -> str | None:
+        """
+        Handle cases where API returns a list of postcodes.
+        Prioritizes the formatted version (containing a space).
+        """
+        if isinstance(value, list):
+            if not value:
+                return None
+
+            for postcode in value:
+                if " " in postcode:
+                    return postcode
+
+            return value[0]
+
+        return value
 
 
 class AddressSummary(Address):
-    postcode_uri: Optional[Union[str, PostcodeReference]] = Field(
-        None, alias="postcodeURI"
-    )
+    postcode_uri: str | PostcodeReference | None = Field(None, alias="postcodeURI")
 
 
 class AddressDetail(Address):
-    postcode_uri: Optional[Union[str, PostcodeReference]] = Field(
-        None, alias="postcodeURI"
-    )
+    postcode_uri: str | PostcodeReference | None = Field(None, alias="postcodeURI")
 
 
 class Site(PublicRegisterModel):
     id: str = Field(..., alias="@id")
-    site_address: Optional[Union[AddressSummary, AddressDetail]] = Field(
+    site_address: AddressSummary | AddressDetail | None = Field(
         None, alias="siteAddress"
     )
 
@@ -80,21 +95,21 @@ class Site(PublicRegisterModel):
 class SiteLocation(PublicRegisterModel):
     easting: float
     northing: float
-    grid_reference: Optional[str] = Field(None, alias="gridReference")
+    grid_reference: str | None = Field(None, alias="gridReference")
 
 
 class SiteDetail(Site):
-    location: Optional[SiteLocation] = None
-    premises: Optional[str] = None
-    site_type: Optional[dict[str, Any]] = Field(None, alias="siteType")
+    location: SiteLocation | None = None
+    premises: str | None = None
+    site_type: dict[str, Any] | None = Field(None, alias="siteType")
 
 
 class RegistrationType(PublicRegisterModel):
     id: str = Field(..., alias="@id")
-    notation: Optional[str] = None
-    label: Optional[str] = None
-    pref_label: Optional[str] = Field(None, alias="prefLabel")
-    see_also: Optional[Union[str, dict[str, str]]] = Field(None, alias="seeAlso")
+    notation: str | None = None
+    label: str | None = None
+    pref_label: str | None = Field(None, alias="prefLabel")
+    see_also: str | dict[str, str] | None = Field(None, alias="seeAlso")
 
 
 class LocalAuthority(PublicRegisterModel):
@@ -103,8 +118,8 @@ class LocalAuthority(PublicRegisterModel):
 
 
 class Tier(PublicRegisterModel):
-    id: Optional[str] = Field(None, alias="@id")
-    label: Optional[str] = None
+    id: str | None = Field(None, alias="@id")
+    label: str | None = None
 
 
 class RDFType(PublicRegisterModel):
@@ -114,7 +129,7 @@ class RDFType(PublicRegisterModel):
 class GenericRegistration(PublicRegisterModel):
     id: str = Field(..., alias="@id")
     register_: Register = Field(..., alias="register")
-    registration_number: Union[str, int] = Field(..., alias="registrationNumber")
+    registration_number: str | int = Field(..., alias="registrationNumber")
 
     @property
     def register(self) -> Register:
@@ -123,40 +138,36 @@ class GenericRegistration(PublicRegisterModel):
 
 
 class GenericRegistrationSummary(GenericRegistration):
-    type: Optional[List[str]] = None
-    holder: Optional[Union[HolderSummary, List[HolderSummary]]] = None
+    type: list[str] | None = None
+    holder: HolderSummary | list[HolderSummary] | None = None
 
 
 class GenericRegistrationDetail(GenericRegistration):
-    type: List[RDFType] = Field(default_factory=list)
-    holder: Optional[Union[HolderDetail, List[HolderDetail]]] = None
+    type: list[RDFType] = Field(default_factory=list)
+    holder: HolderDetail | list[HolderDetail] | None = None
 
 
 class RegistrationSummary(GenericRegistrationSummary):
-    expiry_date: Optional[str] = Field(None, alias="expiryDate")
-    registration_date: Optional[str] = Field(None, alias="registrationDate")
-    local_authority: Optional[LocalAuthority] = Field(None, alias="localAuthority")
-    registration_type: Optional[RegistrationType] = Field(
-        None, alias="registrationType"
-    )
-    site: Optional[Union[Site, List[Site]]] = None
-    tier: Optional[Tier] = None
-    distance: Optional[float] = None
+    expiry_date: str | None = Field(None, alias="expiryDate")
+    registration_date: str | None = Field(None, alias="registrationDate")
+    local_authority: LocalAuthority | None = Field(None, alias="localAuthority")
+    registration_type: RegistrationType | None = Field(None, alias="registrationType")
+    site: Site | list[Site] | None = None
+    tier: Tier | None = None
+    distance: float | None = None
 
 
 class RegistrationDetail(GenericRegistrationDetail):
-    label: Optional[str] = None
-    notation: Optional[str] = None
-    expiry_date: Optional[str] = Field(None, alias="expiryDate")
-    registration_date: Optional[str] = Field(None, alias="registrationDate")
-    registration_type: Optional[RegistrationType] = Field(
-        None, alias="registrationType"
-    )
-    site: Optional[Union[Site, SiteDetail]] = None
-    tier: Optional[Tier] = None
-    local_authority: Optional[LocalAuthority] = Field(None, alias="localAuthority")
+    label: str | None = None
+    notation: str | None = None
+    expiry_date: str | None = Field(None, alias="expiryDate")
+    registration_date: str | None = Field(None, alias="registrationDate")
+    registration_type: RegistrationType | None = Field(None, alias="registrationType")
+    site: Site | SiteDetail | None = None
+    tier: Tier | None = None
+    local_authority: LocalAuthority | None = Field(None, alias="localAuthority")
 
 
 class RegistrationSearchResponse(PublicRegisterModel):
     meta: Metadata
-    items: List[RegistrationSummary] = Field(default_factory=list)
+    items: list[RegistrationSummary] = Field(default_factory=list)

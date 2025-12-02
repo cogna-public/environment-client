@@ -1,14 +1,11 @@
 import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, patch
-import httpx
 
 from environment.public_register import PublicRegisterClient
 from environment.public_register.models import (
     RegistrationSearchResponse,
-    RegistrationSummary,
     RegistrationDetail,
-    Metadata,
 )
 
 
@@ -25,14 +22,18 @@ class TestPublicRegisterClient:
     async def test_client_initialization(self):
         """Test that the client initializes correctly."""
         client = PublicRegisterClient()
-        assert str(client.base_url) == "https://environment.data.gov.uk/public-register/"
+        assert (
+            str(client.base_url) == "https://environment.data.gov.uk/public-register/"
+        )
         await client.aclose()
 
     @pytest.mark.asyncio
     async def test_client_with_custom_timeout(self):
         """Test that the client accepts custom timeout."""
         client = PublicRegisterClient(timeout=60.0)
-        assert str(client.base_url) == "https://environment.data.gov.uk/public-register/"
+        assert (
+            str(client.base_url) == "https://environment.data.gov.uk/public-register/"
+        )
         await client.aclose()
 
     @pytest.mark.asyncio
@@ -56,7 +57,9 @@ class TestPublicRegisterClient:
                         "label": "Waste Operations",
                     },
                     "registrationNumber": "CB/HE5831CE",
-                    "type": ["http://environment.data.gov.uk/public-register/vocab/Registration"],
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
                     "holder": {
                         "@id": "http://environment.data.gov.uk/public-register/holder/12345",
                         "name": "Test Company Limited",
@@ -96,7 +99,11 @@ class TestPublicRegisterClient:
     @pytest.mark.asyncio
     async def test_get_completion(self, client):
         """Test getting completion suggestions."""
-        mock_completion_data = ["Test Company Limited", "Test Holdings Ltd", "Test Industries"]
+        mock_completion_data = [
+            "Test Company Limited",
+            "Test Holdings Ltd",
+            "Test Industries",
+        ]
 
         with patch.object(client, "get") as mock_get:
             mock_response = AsyncMock()
@@ -133,7 +140,9 @@ class TestPublicRegisterClient:
                         "label": "Waste Operations",
                     },
                     "registrationNumber": "CB/HE5831CE",
-                    "type": ["http://environment.data.gov.uk/public-register/vocab/Registration"],
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
                     "holder": {
                         "@id": "http://environment.data.gov.uk/public-register/holder/12345",
                         "name": "Waste Company Limited",
@@ -182,7 +191,7 @@ class TestPublicRegisterClient:
                         "tradingName": "Waste Co",
                     },
                     "label": "Waste Operations Registration CB/HE5831CE",
-                    "notation": ["CB/HE5831CE"],
+                    "notation": "CB/HE5831CE",
                     "expiryDate": "2025-12-31",
                     "registrationDate": "2020-01-01",
                     "site": {
@@ -238,7 +247,9 @@ class TestPublicRegisterClient:
                         "label": "End of Life Vehicles",
                     },
                     "registrationNumber": "ELV123",
-                    "type": ["http://environment.data.gov.uk/public-register/vocab/Registration"],
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
                     "holder": {
                         "@id": "http://environment.data.gov.uk/public-register/holder/54321",
                         "name": "Vehicle Company Limited",
@@ -285,7 +296,9 @@ class TestPublicRegisterClient:
                         "label": "Industrial Installations",
                     },
                     "registrationNumber": "II456",
-                    "type": ["http://environment.data.gov.uk/public-register/vocab/Registration"],
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
                     "holder": {
                         "@id": "http://environment.data.gov.uk/public-register/holder/98765",
                         "name": "Industrial Company Limited",
@@ -332,7 +345,9 @@ class TestPublicRegisterClient:
                         "label": "Water Discharges",
                     },
                     "registrationNumber": "WD789",
-                    "type": ["http://environment.data.gov.uk/public-register/vocab/Registration"],
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
                     "holder": {
                         "@id": "http://environment.data.gov.uk/public-register/holder/11111",
                         "name": "Water Company Limited",
@@ -379,7 +394,9 @@ class TestPublicRegisterClient:
                         "label": "Radioactive Substances",
                     },
                     "registrationNumber": "RS012",
-                    "type": ["http://environment.data.gov.uk/public-register/vocab/Registration"],
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
                     "holder": {
                         "@id": "http://environment.data.gov.uk/public-register/holder/22222",
                         "name": "Radioactive Company Limited",
@@ -426,7 +443,9 @@ class TestPublicRegisterClient:
                         "label": "Waste Carriers and Brokers",
                     },
                     "registrationNumber": "WCB345",
-                    "type": ["http://environment.data.gov.uk/public-register/vocab/Registration"],
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
                     "holder": {
                         "@id": "http://environment.data.gov.uk/public-register/holder/33333",
                         "name": "Carrier Company Limited",
@@ -473,7 +492,9 @@ class TestPublicRegisterClient:
                         "label": "Waste Exemptions",
                     },
                     "registrationNumber": "WEX678",
-                    "type": ["http://environment.data.gov.uk/public-register/vocab/Registration"],
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
                     "holder": {
                         "@id": "http://environment.data.gov.uk/public-register/holder/44444",
                         "name": "Exemption Company Limited",
@@ -520,7 +541,9 @@ class TestPublicRegisterClient:
                         "label": "Water Discharge Exemptions",
                     },
                     "registrationNumber": "WDE901",
-                    "type": ["http://environment.data.gov.uk/public-register/vocab/Registration"],
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
                     "holder": {
                         "@id": "http://environment.data.gov.uk/public-register/holder/55555",
                         "name": "Water Exemption Company Limited",
@@ -567,7 +590,9 @@ class TestPublicRegisterClient:
                         "label": "Scrap Metal Dealers",
                     },
                     "registrationNumber": "SMD234",
-                    "type": ["http://environment.data.gov.uk/public-register/vocab/Registration"],
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
                     "holder": {
                         "@id": "http://environment.data.gov.uk/public-register/holder/66666",
                         "name": "Scrap Metal Company Limited",
@@ -614,7 +639,9 @@ class TestPublicRegisterClient:
                         "label": "Enforcement Actions",
                     },
                     "registrationNumber": "EA567",
-                    "type": ["http://environment.data.gov.uk/public-register/vocab/Registration"],
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
                     "holder": {
                         "@id": "http://environment.data.gov.uk/public-register/holder/77777",
                         "name": "Enforcement Company Limited",
@@ -661,7 +688,9 @@ class TestPublicRegisterClient:
                         "label": "Flood Risk Exemptions",
                     },
                     "registrationNumber": "FRE890",
-                    "type": ["http://environment.data.gov.uk/public-register/vocab/Registration"],
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
                     "holder": {
                         "@id": "http://environment.data.gov.uk/public-register/holder/88888",
                         "name": "Flood Risk Company Limited",
@@ -786,9 +815,84 @@ class TestPublicRegisterClient:
     async def test_verbose_logging(self):
         """Test that verbose logging works correctly."""
         client = PublicRegisterClient(verbose=True)
-        
+
         # Check that event hooks are set up
         assert len(client.event_hooks["request"]) == 1
         assert len(client.event_hooks["response"]) == 1
-        
+
         await client.aclose()
+
+    @pytest.mark.asyncio
+    async def test_postcode_list_handling(self, client):
+        """Test that list postcodes are handled correctly (e.g., ['GL2 5HY', 'GL25HY'])."""
+        mock_response_data = {
+            "meta": {
+                "publisher": "Environment Agency",
+                "licence": "https://www.gov.uk/government/publications/environment-agency-conditional-licence",
+                "documentation": "https://environment.data.gov.uk/public-register/view/api-reference",
+                "hasFormat": ["application/json", "application/csv"],
+                "version": "1.0.0",
+                "limit": 10,
+                "offset": 0,
+            },
+            "items": [
+                {
+                    "@id": "http://environment.data.gov.uk/public-register/waste-operations/registration/TEST1",
+                    "register": {
+                        "@id": "http://environment.data.gov.uk/public-register/waste-operations",
+                        "label": "Waste Operations",
+                    },
+                    "registrationNumber": "TEST1",
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
+                    "holder": {
+                        "@id": "http://environment.data.gov.uk/public-register/holder/12345",
+                        "name": "Test Company",
+                    },
+                    "site": {
+                        "@id": "http://environment.data.gov.uk/public-register/site/1",
+                        "siteAddress": {
+                            "address": "Address 1",
+                            "postcode": ["GL2 5HY", "GL25HY"],
+                        },
+                    },
+                },
+                {
+                    "@id": "http://environment.data.gov.uk/public-register/waste-operations/registration/TEST2",
+                    "register": {
+                        "@id": "http://environment.data.gov.uk/public-register/waste-operations",
+                        "label": "Waste Operations",
+                    },
+                    "registrationNumber": "TEST2",
+                    "type": [
+                        "http://environment.data.gov.uk/public-register/vocab/Registration"
+                    ],
+                    "holder": {
+                        "@id": "http://environment.data.gov.uk/public-register/holder/12345",
+                        "name": "Test Company",
+                    },
+                    "site": {
+                        "@id": "http://environment.data.gov.uk/public-register/site/2",
+                        "siteAddress": {
+                            "address": "Address 2",
+                            "postcode": ["GL25HY"],
+                        },
+                    },
+                },
+            ],
+        }
+
+        with patch.object(client, "get") as mock_get:
+            mock_response = AsyncMock()
+            mock_response.json = lambda: mock_response_data
+            mock_response.raise_for_status.return_value = None
+            mock_get.return_value = mock_response
+
+            result = await client.search_all_registers(name_search="Test")
+
+            assert len(result.items) == 2
+            # Case 1: List with space + no space -> Space preferred
+            assert result.items[0].site.site_address.postcode == "GL2 5HY"
+            # Case 2: List with only no space -> Fallback
+            assert result.items[1].site.site_address.postcode == "GL25HY"
