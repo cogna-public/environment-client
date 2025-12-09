@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import json
 import httpx
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List, Optional
 
 from .models import (
     RegistrationSearchResponse,
-    RegistrationSummary,
     RegistrationDetail,
 )
 
@@ -13,7 +13,7 @@ from .models import (
 class PublicRegisterClient(httpx.AsyncClient):
     """
     An async client for the UK Environment Agency's Public Register API.
-    
+
     This client provides access to various public registers including:
     - Waste Operations
     - End of Life Vehicles
@@ -68,7 +68,7 @@ class PublicRegisterClient(httpx.AsyncClient):
         offset: Optional[int] = None,
         exact_name: Optional[str] = None,
         registration_number: Optional[str] = None,
-        **params
+        **params,
     ) -> RegistrationSearchResponse:
         """
         Search across all registers for registrations matching the criteria.
@@ -105,20 +105,17 @@ class PublicRegisterClient(httpx.AsyncClient):
             "name": exact_name,
             "registration-number": registration_number,
         }
-        
+
         # Remove None values
         search_params = {k: v for k, v in search_params.items() if v is not None}
         search_params.update(params)
-        
+
         response = await self.get("/api/search.json", params=search_params)
         response.raise_for_status()
         return RegistrationSearchResponse(**response.json())
 
     async def get_completion(
-        self,
-        query: str,
-        limit: Optional[int] = None,
-        **params
+        self, query: str, limit: Optional[int] = None, **params
     ) -> List[str]:
         """
         Get text completion suggestions for names or registration numbers.
@@ -136,7 +133,7 @@ class PublicRegisterClient(httpx.AsyncClient):
             "_limit": limit,
         }
         completion_params.update(params)
-        
+
         response = await self.get("/api/completion.json", params=completion_params)
         response.raise_for_status()
         return response.json()
@@ -155,7 +152,7 @@ class PublicRegisterClient(httpx.AsyncClient):
         offset: Optional[int] = None,
         exact_name: Optional[str] = None,
         registration_number: Optional[str] = None,
-        **params
+        **params,
     ) -> RegistrationSearchResponse:
         """
         Search the register of Environmental Permitting Regulations - Waste Operations.
@@ -192,16 +189,20 @@ class PublicRegisterClient(httpx.AsyncClient):
             "name": exact_name,
             "registration-number": registration_number,
         }
-        
+
         # Remove None values
         search_params = {k: v for k, v in search_params.items() if v is not None}
         search_params.update(params)
-        
-        response = await self.get("/waste-operations/registration.json", params=search_params)
+
+        response = await self.get(
+            "/waste-operations/registration.json", params=search_params
+        )
         response.raise_for_status()
         return RegistrationSearchResponse(**response.json())
 
-    async def get_waste_operation_by_id(self, registration_id: str) -> RegistrationDetail:
+    async def get_waste_operation_by_id(
+        self, registration_id: str
+    ) -> RegistrationDetail:
         """
         Get details of a specific waste operation registration.
 
@@ -211,7 +212,9 @@ class PublicRegisterClient(httpx.AsyncClient):
         Returns:
             RegistrationDetail: Details of the waste operation registration
         """
-        response = await self.get(f"/waste-operations/registration/{registration_id}.json")
+        response = await self.get(
+            f"/waste-operations/registration/{registration_id}.json"
+        )
         response.raise_for_status()
         data = response.json()
         return RegistrationDetail(**data["items"][0])
@@ -230,7 +233,7 @@ class PublicRegisterClient(httpx.AsyncClient):
         offset: Optional[int] = None,
         exact_name: Optional[str] = None,
         registration_number: Optional[str] = None,
-        **params
+        **params,
     ) -> RegistrationSearchResponse:
         """
         Search the register of End of Life Vehicle Authorised Treatment Facilities.
@@ -267,16 +270,20 @@ class PublicRegisterClient(httpx.AsyncClient):
             "name": exact_name,
             "registration-number": registration_number,
         }
-        
+
         # Remove None values
         search_params = {k: v for k, v in search_params.items() if v is not None}
         search_params.update(params)
-        
-        response = await self.get("/end-of-life-vehicles/registration.json", params=search_params)
+
+        response = await self.get(
+            "/end-of-life-vehicles/registration.json", params=search_params
+        )
         response.raise_for_status()
         return RegistrationSearchResponse(**response.json())
 
-    async def get_end_of_life_vehicle_by_id(self, registration_id: str) -> RegistrationDetail:
+    async def get_end_of_life_vehicle_by_id(
+        self, registration_id: str
+    ) -> RegistrationDetail:
         """
         Get details of a specific end of life vehicle registration.
 
@@ -286,7 +293,9 @@ class PublicRegisterClient(httpx.AsyncClient):
         Returns:
             RegistrationDetail: Details of the end of life vehicle registration
         """
-        response = await self.get(f"/end-of-life-vehicles/registration/{registration_id}.json")
+        response = await self.get(
+            f"/end-of-life-vehicles/registration/{registration_id}.json"
+        )
         response.raise_for_status()
         data = response.json()
         return RegistrationDetail(**data["items"][0])
@@ -305,7 +314,7 @@ class PublicRegisterClient(httpx.AsyncClient):
         offset: Optional[int] = None,
         exact_name: Optional[str] = None,
         registration_number: Optional[str] = None,
-        **params
+        **params,
     ) -> RegistrationSearchResponse:
         """
         Search the register of Industrial Installations.
@@ -342,16 +351,20 @@ class PublicRegisterClient(httpx.AsyncClient):
             "name": exact_name,
             "registration-number": registration_number,
         }
-        
+
         # Remove None values
         search_params = {k: v for k, v in search_params.items() if v is not None}
         search_params.update(params)
-        
-        response = await self.get("/industrial-installations/registration.json", params=search_params)
+
+        response = await self.get(
+            "/industrial-installations/registration.json", params=search_params
+        )
         response.raise_for_status()
         return RegistrationSearchResponse(**response.json())
 
-    async def get_industrial_installation_by_id(self, registration_id: str) -> RegistrationDetail:
+    async def get_industrial_installation_by_id(
+        self, registration_id: str
+    ) -> RegistrationDetail:
         """
         Get details of a specific industrial installation registration.
 
@@ -361,7 +374,9 @@ class PublicRegisterClient(httpx.AsyncClient):
         Returns:
             RegistrationDetail: Details of the industrial installation registration
         """
-        response = await self.get(f"/industrial-installations/registration/{registration_id}.json")
+        response = await self.get(
+            f"/industrial-installations/registration/{registration_id}.json"
+        )
         response.raise_for_status()
         data = response.json()
         return RegistrationDetail(**data["items"][0])
@@ -380,7 +395,7 @@ class PublicRegisterClient(httpx.AsyncClient):
         offset: Optional[int] = None,
         exact_name: Optional[str] = None,
         registration_number: Optional[str] = None,
-        **params
+        **params,
     ) -> RegistrationSearchResponse:
         """
         Search the register of Water Discharges.
@@ -417,16 +432,20 @@ class PublicRegisterClient(httpx.AsyncClient):
             "name": exact_name,
             "registration-number": registration_number,
         }
-        
+
         # Remove None values
         search_params = {k: v for k, v in search_params.items() if v is not None}
         search_params.update(params)
-        
-        response = await self.get("/water-discharges/registration.json", params=search_params)
+
+        response = await self.get(
+            "/water-discharges/registration.json", params=search_params
+        )
         response.raise_for_status()
         return RegistrationSearchResponse(**response.json())
 
-    async def get_water_discharge_by_id(self, registration_id: str) -> RegistrationDetail:
+    async def get_water_discharge_by_id(
+        self, registration_id: str
+    ) -> RegistrationDetail:
         """
         Get details of a specific water discharge registration.
 
@@ -436,7 +455,9 @@ class PublicRegisterClient(httpx.AsyncClient):
         Returns:
             RegistrationDetail: Details of the water discharge registration
         """
-        response = await self.get(f"/water-discharges/registration/{registration_id}.json")
+        response = await self.get(
+            f"/water-discharges/registration/{registration_id}.json"
+        )
         response.raise_for_status()
         data = response.json()
         return RegistrationDetail(**data["items"][0])
@@ -455,7 +476,7 @@ class PublicRegisterClient(httpx.AsyncClient):
         offset: Optional[int] = None,
         exact_name: Optional[str] = None,
         registration_number: Optional[str] = None,
-        **params
+        **params,
     ) -> RegistrationSearchResponse:
         """
         Search the register of Radioactive Substances.
@@ -492,16 +513,20 @@ class PublicRegisterClient(httpx.AsyncClient):
             "name": exact_name,
             "registration-number": registration_number,
         }
-        
+
         # Remove None values
         search_params = {k: v for k, v in search_params.items() if v is not None}
         search_params.update(params)
-        
-        response = await self.get("/radioactive-substance/registration.json", params=search_params)
+
+        response = await self.get(
+            "/radioactive-substance/registration.json", params=search_params
+        )
         response.raise_for_status()
         return RegistrationSearchResponse(**response.json())
 
-    async def get_radioactive_substance_by_id(self, registration_id: str) -> RegistrationDetail:
+    async def get_radioactive_substance_by_id(
+        self, registration_id: str
+    ) -> RegistrationDetail:
         """
         Get details of a specific radioactive substance registration.
 
@@ -511,7 +536,9 @@ class PublicRegisterClient(httpx.AsyncClient):
         Returns:
             RegistrationDetail: Details of the radioactive substance registration
         """
-        response = await self.get(f"/radioactive-substance/registration/{registration_id}.json")
+        response = await self.get(
+            f"/radioactive-substance/registration/{registration_id}.json"
+        )
         response.raise_for_status()
         data = response.json()
         return RegistrationDetail(**data["items"][0])
@@ -530,7 +557,7 @@ class PublicRegisterClient(httpx.AsyncClient):
         offset: Optional[int] = None,
         exact_name: Optional[str] = None,
         registration_number: Optional[str] = None,
-        **params
+        **params,
     ) -> RegistrationSearchResponse:
         """
         Search the register of Waste Carriers and Brokers.
@@ -567,16 +594,20 @@ class PublicRegisterClient(httpx.AsyncClient):
             "name": exact_name,
             "registration-number": registration_number,
         }
-        
+
         # Remove None values
         search_params = {k: v for k, v in search_params.items() if v is not None}
         search_params.update(params)
-        
-        response = await self.get("/waste-carriers-brokers/registration.json", params=search_params)
+
+        response = await self.get(
+            "/waste-carriers-brokers/registration.json", params=search_params
+        )
         response.raise_for_status()
         return RegistrationSearchResponse(**response.json())
 
-    async def get_waste_carrier_broker_by_id(self, registration_id: str) -> RegistrationDetail:
+    async def get_waste_carrier_broker_by_id(
+        self, registration_id: str
+    ) -> RegistrationDetail:
         """
         Get details of a specific waste carrier or broker registration.
 
@@ -586,7 +617,9 @@ class PublicRegisterClient(httpx.AsyncClient):
         Returns:
             RegistrationDetail: Details of the waste carrier or broker registration
         """
-        response = await self.get(f"/waste-carriers-brokers/registration/{registration_id}.json")
+        response = await self.get(
+            f"/waste-carriers-brokers/registration/{registration_id}.json"
+        )
         response.raise_for_status()
         data = response.json()
         return RegistrationDetail(**data["items"][0])
@@ -605,7 +638,7 @@ class PublicRegisterClient(httpx.AsyncClient):
         offset: Optional[int] = None,
         exact_name: Optional[str] = None,
         registration_number: Optional[str] = None,
-        **params
+        **params,
     ) -> RegistrationSearchResponse:
         """
         Search the register of Waste Exemptions.
@@ -642,16 +675,20 @@ class PublicRegisterClient(httpx.AsyncClient):
             "name": exact_name,
             "registration-number": registration_number,
         }
-        
+
         # Remove None values
         search_params = {k: v for k, v in search_params.items() if v is not None}
         search_params.update(params)
-        
-        response = await self.get("/waste-exemptions/registration.json", params=search_params)
+
+        response = await self.get(
+            "/waste-exemptions/registration.json", params=search_params
+        )
         response.raise_for_status()
         return RegistrationSearchResponse(**response.json())
 
-    async def get_waste_exemption_by_id(self, registration_id: str) -> RegistrationDetail:
+    async def get_waste_exemption_by_id(
+        self, registration_id: str
+    ) -> RegistrationDetail:
         """
         Get details of a specific waste exemption registration.
 
@@ -661,7 +698,9 @@ class PublicRegisterClient(httpx.AsyncClient):
         Returns:
             RegistrationDetail: Details of the waste exemption registration
         """
-        response = await self.get(f"/waste-exemptions/registration/{registration_id}.json")
+        response = await self.get(
+            f"/waste-exemptions/registration/{registration_id}.json"
+        )
         response.raise_for_status()
         data = response.json()
         return RegistrationDetail(**data["items"][0])
@@ -680,7 +719,7 @@ class PublicRegisterClient(httpx.AsyncClient):
         offset: Optional[int] = None,
         exact_name: Optional[str] = None,
         registration_number: Optional[str] = None,
-        **params
+        **params,
     ) -> RegistrationSearchResponse:
         """
         Search the register of Water Discharge Exemptions.
@@ -717,16 +756,20 @@ class PublicRegisterClient(httpx.AsyncClient):
             "name": exact_name,
             "registration-number": registration_number,
         }
-        
+
         # Remove None values
         search_params = {k: v for k, v in search_params.items() if v is not None}
         search_params.update(params)
-        
-        response = await self.get("/water-discharge-exemptions/registration.json", params=search_params)
+
+        response = await self.get(
+            "/water-discharge-exemptions/registration.json", params=search_params
+        )
         response.raise_for_status()
         return RegistrationSearchResponse(**response.json())
 
-    async def get_water_discharge_exemption_by_id(self, registration_id: str) -> RegistrationDetail:
+    async def get_water_discharge_exemption_by_id(
+        self, registration_id: str
+    ) -> RegistrationDetail:
         """
         Get details of a specific water discharge exemption registration.
 
@@ -736,7 +779,9 @@ class PublicRegisterClient(httpx.AsyncClient):
         Returns:
             RegistrationDetail: Details of the water discharge exemption registration
         """
-        response = await self.get(f"/water-discharge-exemptions/registration/{registration_id}.json")
+        response = await self.get(
+            f"/water-discharge-exemptions/registration/{registration_id}.json"
+        )
         response.raise_for_status()
         data = response.json()
         return RegistrationDetail(**data["items"][0])
@@ -755,7 +800,7 @@ class PublicRegisterClient(httpx.AsyncClient):
         offset: Optional[int] = None,
         exact_name: Optional[str] = None,
         registration_number: Optional[str] = None,
-        **params
+        **params,
     ) -> RegistrationSearchResponse:
         """
         Search the register of Scrap Metal Dealers.
@@ -792,16 +837,20 @@ class PublicRegisterClient(httpx.AsyncClient):
             "name": exact_name,
             "registration-number": registration_number,
         }
-        
+
         # Remove None values
         search_params = {k: v for k, v in search_params.items() if v is not None}
         search_params.update(params)
-        
-        response = await self.get("/scrap-metal-dealers/registration.json", params=search_params)
+
+        response = await self.get(
+            "/scrap-metal-dealers/registration.json", params=search_params
+        )
         response.raise_for_status()
         return RegistrationSearchResponse(**response.json())
 
-    async def get_scrap_metal_dealer_by_id(self, registration_id: str) -> RegistrationDetail:
+    async def get_scrap_metal_dealer_by_id(
+        self, registration_id: str
+    ) -> RegistrationDetail:
         """
         Get details of a specific scrap metal dealer registration.
 
@@ -811,7 +860,9 @@ class PublicRegisterClient(httpx.AsyncClient):
         Returns:
             RegistrationDetail: Details of the scrap metal dealer registration
         """
-        response = await self.get(f"/scrap-metal-dealers/registration/{registration_id}.json")
+        response = await self.get(
+            f"/scrap-metal-dealers/registration/{registration_id}.json"
+        )
         response.raise_for_status()
         data = response.json()
         return RegistrationDetail(**data["items"][0])
@@ -830,7 +881,7 @@ class PublicRegisterClient(httpx.AsyncClient):
         offset: Optional[int] = None,
         exact_name: Optional[str] = None,
         registration_number: Optional[str] = None,
-        **params
+        **params,
     ) -> RegistrationSearchResponse:
         """
         Search the register of Enforcement Actions.
@@ -867,16 +918,20 @@ class PublicRegisterClient(httpx.AsyncClient):
             "name": exact_name,
             "registration-number": registration_number,
         }
-        
+
         # Remove None values
         search_params = {k: v for k, v in search_params.items() if v is not None}
         search_params.update(params)
-        
-        response = await self.get("/enforcement-action/registration.json", params=search_params)
+
+        response = await self.get(
+            "/enforcement-action/registration.json", params=search_params
+        )
         response.raise_for_status()
         return RegistrationSearchResponse(**response.json())
 
-    async def get_enforcement_action_by_id(self, registration_id: str) -> RegistrationDetail:
+    async def get_enforcement_action_by_id(
+        self, registration_id: str
+    ) -> RegistrationDetail:
         """
         Get details of a specific enforcement action registration.
 
@@ -886,7 +941,9 @@ class PublicRegisterClient(httpx.AsyncClient):
         Returns:
             RegistrationDetail: Details of the enforcement action registration
         """
-        response = await self.get(f"/enforcement-action/registration/{registration_id}.json")
+        response = await self.get(
+            f"/enforcement-action/registration/{registration_id}.json"
+        )
         response.raise_for_status()
         data = response.json()
         return RegistrationDetail(**data["items"][0])
@@ -905,7 +962,7 @@ class PublicRegisterClient(httpx.AsyncClient):
         offset: Optional[int] = None,
         exact_name: Optional[str] = None,
         registration_number: Optional[str] = None,
-        **params
+        **params,
     ) -> RegistrationSearchResponse:
         """
         Search the register of Flood Risk Exemptions.
@@ -942,16 +999,20 @@ class PublicRegisterClient(httpx.AsyncClient):
             "name": exact_name,
             "registration-number": registration_number,
         }
-        
+
         # Remove None values
         search_params = {k: v for k, v in search_params.items() if v is not None}
         search_params.update(params)
-        
-        response = await self.get("/flood-risk-exemptions/registration.json", params=search_params)
+
+        response = await self.get(
+            "/flood-risk-exemptions/registration.json", params=search_params
+        )
         response.raise_for_status()
         return RegistrationSearchResponse(**response.json())
 
-    async def get_flood_risk_exemption_by_id(self, registration_id: str) -> RegistrationDetail:
+    async def get_flood_risk_exemption_by_id(
+        self, registration_id: str
+    ) -> RegistrationDetail:
         """
         Get details of a specific flood risk exemption registration.
 
@@ -961,7 +1022,9 @@ class PublicRegisterClient(httpx.AsyncClient):
         Returns:
             RegistrationDetail: Details of the flood risk exemption registration
         """
-        response = await self.get(f"/flood-risk-exemptions/registration/{registration_id}.json")
+        response = await self.get(
+            f"/flood-risk-exemptions/registration/{registration_id}.json"
+        )
         response.raise_for_status()
         data = response.json()
         return RegistrationDetail(**data["items"][0])
@@ -1061,7 +1124,9 @@ class PublicRegisterClient(httpx.AsyncClient):
         Returns:
             bytes: CSV data
         """
-        response = await self.get("/downloads/water-discharge-exemptions", params=params)
+        response = await self.get(
+            "/downloads/water-discharge-exemptions", params=params
+        )
         response.raise_for_status()
         return response.content
 
@@ -1120,3 +1185,122 @@ class PublicRegisterClient(httpx.AsyncClient):
         response = await self.get("/downloads/flood-risk-exemptions", params=params)
         response.raise_for_status()
         return response.content
+
+
+class RateLimitedPublicRegisterClient(PublicRegisterClient):
+    """
+    DEFRA PublicRegisterClient with automatic rate limiting and circuit breaker.
+
+    All HTTP requests are protected by:
+    - Rate limiting: 5 requests/second with 30s timeout
+    - Circuit breaker: Opens after 3 consecutive 403 errors, prevents cascade failures
+    - Automatic retry: Up to 3 attempts with exponential backoff on transient errors
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize rate-limited client with circuit breaker protection.
+
+        Args:
+            *args: Positional arguments to pass to PublicRegisterClient
+            **kwargs: Keyword arguments to pass to PublicRegisterClient
+        """
+        super().__init__(*args, **kwargs)
+        from ..resilience import DefraRateLimitedCircuitBreaker
+
+        self._circuit_breaker = DefraRateLimitedCircuitBreaker()
+
+    async def get(self, url: str, **kwargs: Any) -> Any:
+        """
+        Make a protected GET request with rate limiting, circuit breaker, and retries.
+
+        Retries up to 3 times with exponential backoff on transient errors.
+        Does NOT retry on circuit breaker open or rate limit errors (403s).
+
+        Args:
+            url: The URL to request
+            **kwargs: Additional arguments to pass to the underlying get method
+
+        Returns:
+            Response from the API
+
+        Raises:
+            CircuitBreakerOpen: If circuit breaker is open due to repeated failures
+            RateLimitError: If 403 rate limit error is encountered
+        """
+        from tenacity import (
+            retry,
+            retry_if_not_exception_type,
+            stop_after_attempt,
+            wait_exponential,
+        )
+        from ..resilience import CircuitBreakerOpen, RateLimitError
+
+        # DEFRA retry configuration
+        DEFRA_MAX_RETRY_ATTEMPTS = 3
+        DEFRA_RETRY_MULTIPLIER = 1
+        DEFRA_RETRY_MIN_WAIT_SECONDS = 1
+        DEFRA_RETRY_MAX_WAIT_SECONDS = 10
+
+        # Apply retry and circuit breaker dynamically to allow fixture to reset state
+        @retry(
+            stop=stop_after_attempt(DEFRA_MAX_RETRY_ATTEMPTS),
+            wait=wait_exponential(
+                multiplier=DEFRA_RETRY_MULTIPLIER,
+                min=DEFRA_RETRY_MIN_WAIT_SECONDS,
+                max=DEFRA_RETRY_MAX_WAIT_SECONDS,
+            ),
+            retry=retry_if_not_exception_type((CircuitBreakerOpen, RateLimitError)),
+            reraise=True,
+        )
+        @self._circuit_breaker
+        async def _make_request() -> Any:
+            return await super(RateLimitedPublicRegisterClient, self).get(url, **kwargs)
+
+        return await _make_request()
+
+    async def get_as_json(self, url: str, **kwargs: Any) -> dict[str, Any]:
+        """
+        Get a URL and return the parsed JSON response.
+
+        This is a convenience method that:
+        1. Makes a GET request
+        2. Checks the response status (raises HTTPStatusError if not successful)
+        3. Parses the response as JSON
+        4. If JSON parsing fails, raises an error with the response body
+
+        Args:
+            url: The URL to request
+            **kwargs: Additional arguments to pass to the underlying get method
+
+        Returns:
+            Parsed JSON response as a dictionary
+
+        Raises:
+            CircuitBreakerOpen: If circuit breaker is open due to repeated failures
+            RateLimitError: If 403 rate limit error is encountered
+            httpx.HTTPStatusError: If the response status indicates an error (4xx, 5xx)
+            ValueError: If the response cannot be parsed as JSON
+        """
+        response = await self.get(url, **kwargs)
+
+        response.raise_for_status()
+
+        try:
+            return response.json()
+        except (json.JSONDecodeError, ValueError) as e:
+            # If JSON parsing fails, include the response body in the error
+            body = None
+            try:
+                body = response.text
+            except Exception:
+                pass
+
+            if body:
+                raise ValueError(
+                    f"Failed to parse JSON response from DEFRA API for {url}. "
+                    f"Response body: {body[:500]}"
+                ) from e
+            raise ValueError(
+                f"Failed to parse JSON response from DEFRA API for {url}"
+            ) from e

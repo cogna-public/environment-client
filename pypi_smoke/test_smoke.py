@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 from environment.flood_monitoring import FloodClient
 
@@ -15,4 +13,3 @@ async def test_pyppi_install_and_basic_calls():
         assert isinstance(stations, list)
         # Expect non-empty results under normal conditions
         assert len(stations) > 0
-

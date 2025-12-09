@@ -56,7 +56,7 @@ jobs:
         run: |
           git tag "v${NEW_VERSION}"
           git push origin "v${NEW_VERSION}"
-          
+
           # Generate release notes from commits since last tag
           LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -n "$LAST_TAG" ]; then
@@ -64,7 +64,7 @@ jobs:
           else
             RELEASE_NOTES="Initial release"
           fi
-          
+
           gh release create "v${NEW_VERSION}" \
             --title "v${NEW_VERSION}" \
             --notes "$RELEASE_NOTES" \
