@@ -16,6 +16,8 @@ uv pip install environment-client
 
 ## Usage 🐍
 
+### Basic Usage
+
 ```python
 import asyncio
 from environment.flood_monitoring import FloodClient
@@ -33,11 +35,11 @@ async def main():
         # Get flood warnings
         flood_warnings = await flood_client.get_flood_warnings()
         print(f"Found {len(flood_warnings)} flood warnings.")
-        
+
         # Search for waste operations registrations
         waste_operations = await public_register_client.get_waste_operations(limit=5)
         print(f"Found {len(waste_operations.items)} waste operations.")
-        
+
         # Search across all registers
         all_registrations = await public_register_client.search_all_registers(name_search="Limited", limit=5)
         print(f"Found {len(all_registrations.items)} registrations with 'Limited' in the name.")
@@ -46,6 +48,47 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+### Rate-Limited Client (Recommended for Production)
+
+For production use, especially when making many requests or querying multiple registers, use the `RateLimitedPublicRegisterClient` which includes:
+
+- **Rate Limiting**: Enforces 5 requests/second to prevent overwhelming the API
+- **Circuit Breaker**: Automatically backs off when encountering repeated 403 errors
+- **Automatic Retry**: Retries transient errors up to 3 times with exponential backoff
+
+```python
+import asyncio
+from environment.public_register import RateLimitedPublicRegisterClient
+
+
+async def main():
+    """
+    Rate-limited client prevents 403 errors during bulk operations.
+    """
+    async with RateLimitedPublicRegisterClient() as client:
+        # Search across multiple register types safely
+        waste_operations = await client.get_waste_operations(easting=500000, northing=200000, dist=10)
+        industrial = await client.get_industrial_installations(easting=500000, northing=200000, dist=10)
+
+        # Fetch detailed information for each result
+        for registration in waste_operations.items[:10]:
+            # Rate limiting prevents 403 errors on rapid consecutive requests
+            details = await client.get_as_json(f"/waste-operations/registration/{registration.id}.json")
+            print(f"Fetched details for {registration.registration_number}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+**When to use RateLimitedPublicRegisterClient:**
+- Making bulk requests across multiple registers
+- Fetching detailed information for many registrations
+- Running automated jobs or scheduled tasks
+- Any production application querying the Public Register API
+
+**Configuration:** The rate-limited client uses sensible defaults based on DEFRA's documented rate limits. For custom rate limiting or circuit breaker configuration, you can create a custom instance of `DefraRateLimitedCircuitBreaker` and pass it to the client.
 
 ## Supported APIs 🌐
 

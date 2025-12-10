@@ -2,7 +2,7 @@ from .flood_monitoring import FloodClient
 from .bathing_waters import BathingWatersClient
 from .asset_management import AssetManagementClient
 from .catchment_data import CatchmentDataClient
-from .public_register import PublicRegisterClient
+from .public_register import PublicRegisterClient, RateLimitedPublicRegisterClient
 
 __all__ = [
     "FloodClient",
@@ -10,4 +10,5 @@ __all__ = [
     "AssetManagementClient",
     "CatchmentDataClient",
     "PublicRegisterClient",
+    "RateLimitedPublicRegisterClient",
 ]
