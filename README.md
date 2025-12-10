@@ -33,11 +33,11 @@ async def main():
         # Get flood warnings
         flood_warnings = await flood_client.get_flood_warnings()
         print(f"Found {len(flood_warnings)} flood warnings.")
-        
+
         # Search for waste operations registrations
         waste_operations = await public_register_client.get_waste_operations(limit=5)
         print(f"Found {len(waste_operations.items)} waste operations.")
-        
+
         # Search across all registers
         all_registrations = await public_register_client.search_all_registers(name_search="Limited", limit=5)
         print(f"Found {len(all_registrations.items)} registrations with 'Limited' in the name.")

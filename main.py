@@ -34,8 +34,12 @@ async def main():
         print(f"Found {len(waste_operations.items)} waste operations.")
 
         # Search across all registers
-        all_registrations = await public_register_client.search_all_registers(name_search="Limited", limit=5)
-        print(f"Found {len(all_registrations.items)} registrations with 'Limited' in the name.")
+        all_registrations = await public_register_client.search_all_registers(
+            name_search="Limited", limit=5
+        )
+        print(
+            f"Found {len(all_registrations.items)} registrations with 'Limited' in the name."
+        )
 
 
 if __name__ == "__main__":

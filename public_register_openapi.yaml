@@ -8,79 +8,79 @@ info:
   termsOfService: "data-licence"
   description: |
     # Introduction
-    
+
     The Environment Agency licenses industry, business and individuals to carry out certain activities that have the
-    potential to pollute the environment. 
-    
+    potential to pollute the environment.
+
     The Public Registers Online service provides access to information about permits, registrations and exemptions both
     in the form of searchable [web pages](index) and as data which can be accessed by developers via an API (Application Program
     Interface).
-                 
+
     All data provided via the PRO (both website and API) is provided under a licence, with no requirement for
     registration. Before downloading or accessing data, you must first check the supporting information provided through
     the PRO Data Licence information page to determine if the conditions on use are suitable for your purposes.  If they
     aren’t, this information is not provided with a licence for use, and the data is provided for read right only.
 
     # Terms of use
-    
+
     These APIs are provided under the
     [Environment Agency Conditional Licence](https://www.gov.uk/government/publications/environment-agency-conditional-licence/environment-agency-conditional-licence)
     with no requirement for registration. Detailed information about specific conditions for each register can be found [here](data-licence).
     If you make use of this data, note the conditions carefully.
-    
+
     # Coverage
     ## Geography
-    
+
     The data that is available from this API covers all of England.
-    
+
     ## Time
-    
+
     This API returns all currently active permits and licences. Some of the endpoints also return permits and
     licences that have recently expired. See individual endpoint help for more information.
-    
+
     # Authentication
-    
+
     No authentication is required to use these APIs.
-    
+
     # Note on terminology
-    
+
     The different public registers use different terminology for the things that they contain. These include
     *registration*, *permit*, *licence* and *enforcement action*.
-    
+
     The API, and much of this documentation, uses the generic term registration, meaning anything that has been
     recorded in a register. This uniformity enables a single API to work across registers.
-    
+
     When a register contains a specific type of registration, for example an Environmental Permit, the data
     items will be marked as being of that type and the user interface will display the entries using the
     appropriate terminology.
-    
+
     The API provides and uses web addresses for all the entities involved - registers, individual registrations,
     holders and sites associated with registrations. We use the term <em>URI</em> for these web addresses.
-    
+
     # Endpoints summary
-    
+
     This is a brief summary of the APIs available, see the individual endpoint sections for details.
-    
+
     In the links in the tables `{root}` corresponds to `http://environment.data.gov.uk/public-register`.
-    
+
     |What|API|Comments|
     |-----|----|-----|
     |Search across all registers|`{root}/api/search`|See [Cross Register](#get-/api/search) section for details of parameters and responses|
     |List entries in a single register|`{root}/{register}/registration`|In addition to the parameters available for the cross-register search, various other filters can be applied to each register; see individual register section for details|
     |Retrieve an entry|`{root}/{register}/registration/{id}`|The registration ID can be found using the above search endpoints|
     |Name/number lookup|`{root}/api/completion`|Text completion to find possible names of holders or registration numbers based on a partial text entry. See [Cross Register](#get-/api/completion) section for details|
-    
+
     # API structure
-    
+
     The APIs provide a [REST](http://en.wikipedia.org/wiki/Representational_state_transfer) style access to the data
     via simple HTTP GET requests which return data in JSON, CSV or RDF formats (as well as providing an HTML rendering
     for web browsers).
-    
+
     ## Generic response structure
-    
+
     With the exception of the [name/number lookup endpoint](#get-/api/completion), all API endpoints contain two main
     elements: metadata and items [[1]](#footnote-1). For example:
-    
+
     **application/json**
     ```
     {
@@ -90,14 +90,14 @@ info:
     ```
     **application/rdf+xml**
     ```
-      <rdf:Description rdf:about="http://environment.data.gov.uk/public-register/api/search?name-search=%2example-search-term"> 
+      <rdf:Description rdf:about="http://environment.data.gov.uk/public-register/api/search?name-search=%2example-search-term">
         ...
         <j.1:items rdf:parseType="Collection">
           ...
         </j.1:items>
       </rdf:Description>
     ```
-    
+
     **text/turtle**
     ```
     <http://environment.data.gov.uk/public-register/api/search?name-search=%2example-search-term>
@@ -105,14 +105,14 @@ info:
         <http://purl.org/linked-data/api/vocab#items>
                 ( ... ) .
     ```
-    
-    
+
+
     ### Metadata and versioning
     The metadata block provides information on the publisher and applicable licence as well as a link to this,
     or other, documentation. For JSON responses, this will be the `meta` field, and linked data content types include
     this information as properties of the request URL. CSV resonses do not include metadata.
-    
-    
+
+
     |Property|JSON field name|Predicate URI|Comment|
     |--|--|--|--|
     |Publisher|publisher|http://purl.org/dc/terms/publisher|Publisher name|
@@ -123,35 +123,35 @@ info:
     |Alternative formats|hasFormat|http://purl.org/dc/terms/hasFormat|If the resource is also available in other formats then this will supply a list of URLs for those alternative formats (the media type is implied as a suffix; see [content types](#overview--content-types))|
     |Limit|limit|<http://purl.org/linked-data/api/vocab#limit>|The limit applied to the search (where applicable). Where no `_limit` parameter was given, this indicates any default that may have been applied|
     |Offset|offset|<http://purl.org/linked-data/api/vocab#offset>|The offset applied to the search (where applicable)|
-    
-    
+
+
     <p id="footnote-1" style="font-size: x-small; line-height: unset;">
     1. JSON responses also contain an <code style="font-size: x-small;">@context</code> reference, which will enable the data to be read as json-ld in the
     next version of the API, but this is not yet suported. If you require the response as linked data, use the
     `text/turtle` or `application/rdf+xml` content type.
     </p>
-    
+
     ### Items
-    
+
     The items element in the response will contain an array of items. Even if there is only one entry (eg. a registration
     description resonse), the value will always be an array. JSON responses identify each item by a URI given in the
     `@id` field.
 
     ## Content types
-    
+
     The descriptions of individual items from `{root}/{register}/registration/{id}` endpoints can be obtained in multiple
     formats. The default format is a human readable HTML render but all item descriptions can also return information
     in JSON and RDF formats (RDF/XML and Turtle).
     Similarly lists of items can be obtained in these formats, as well as in CSV format. The CSV format more closeley matches
     the human-readable HTML page, but does not contain as much information as the other formats.
-    
+
     To select the desired format use standard HTTP content negation. E.g.:
     ```
     curl -i -H "Accept: text/turtle" http://environment.data.gov.uk/public-register/radioactive-substance/registration/GB3435DG
     ```
     All endpoints also support a short cut of appending a type suffix to the URI to force a particular content type.
     The supported suffixes are:
-    
+
     |Suffix|Type|
     |---|---|
     |.json|application/json|
@@ -159,18 +159,18 @@ info:
     |.csv|text/csv|
     |.ttl|text/turtle|
     |.rdf|application/rdf+xml|
-    
+
     ## Lists: limits and paging
-    
+
     Endpoints that return a list of items support the query parameters `_limit` and `_offset` to limit the number of
     results and page through them: `_limit=y&_offset=x` will return the first *y* items, starting at item *x*. This
     allows you to page through long lists of results.
-    
+
     A default limit may be applied if none is given, so the `_offset` parameter must be used to fetch results in batches
     should you require more results.
-    
+
     If applicable, the limit (including any default used) and offset will be included in the response metadata.
-    
+
 
 servers:
   - url: https://environment.data.gov.uk/public-register
@@ -221,7 +221,7 @@ tags:
       A waste exemption is a waste operation that is exempt from needing an environmental permit. Each exemption has specific limits and conditions that the holder must operate within.
 
       The address of the holder (`holder.hasAddress`) is often different from the site to which the registration applies (`site.siteAddress`).
-      A registration may include more than one site. A site may be associated with more than one exemption. Each exemption has an associated `registrationType` identifying the exemption and asscocated `registrationDate` and `expiryDate`. 
+      A registration may include more than one site. A site may be associated with more than one exemption. Each exemption has an associated `registrationType` identifying the exemption and asscocated `registrationDate` and `expiryDate`.
 
       The exemptions apply to the sites, not to the registration, but are included as properties of the registration
       for convenience, as well as being included for each site.
@@ -269,11 +269,11 @@ components:
       required: false
       description: |
         The full or partial ID of a registration or permit
-        
+
         Note that registration numbers will be treated as collections of words so that a registration number such as
         _CB/HE5831CE_ will be found by a search for _HE5831_ even though the initial _CB/_ is missing.
-        
-        Each word will be treated as a prefix, so _HE_ will match _CB/HE5831CE_ 
+
+        Each word will be treated as a prefix, so _HE_ will match _CB/HE5831CE_
 
         As a special case a word ending in a number will be treated as an exact word mach so _A2_ will match _A2_ or
         _CB/A2/001_ but not _A27_ or _CB/A231/001_. This is to avoid confusion when searching for numeric entries.
@@ -286,12 +286,12 @@ components:
       required: false
       description: |
         Full or partial name of the business or individual registered.
-        
+
         The text queries are treated as prefixes (so _Atkin_ would match _Atkins_, _Atkinson_ and so on).
         To search for a match somewhere within the field you can prefix the search with _*_ (so _*tkins_ would match
         _Atkins_, _Watkins_ and so on). If the search string contains more than one word then each is matched separately
-        (so _jo atkin_ would match _John Atkinson_ and _Atkins Joinery_). 
-        
+        (so _jo atkin_ would match _John Atkinson_ and _Atkins Joinery_).
+
         Note that water quality exemptions do not have a holder associated with them and won't appear in results.
       schema:
         type: string
@@ -318,19 +318,19 @@ components:
         A common requirement is to search for a specific registration knowing either the name of the registered
         person/business or the registration number. This parameter allows you to search for all records where either the
         name or registration number matches the query term.
-        
+
         A name number search will return the simple union of the results you would expect from `name-search` and
         `number-search` individually, so a query for `name-search=abc` contains all the records from a search with
         `name-search=abc` and all the records from `number-search=abc`, and the same matching rules apply. For registers
         that do not support `name-search`, such as Water Quality Exemptions, this behaves the same as `number-search`.
-        
+
         Note that, __if this parameter is included, no other parameters may be given__, with the exception of `_limit`
         and `_offset`. All other search parameters behave
         as filters, so that all results will match all parameters, and only this one supports the union of
         two separate search terms. Should you need to filter the results of a `name-number-search` query by any other
         field, join the results of separate queries with the `name-search` and `number-search` parameter.
-        
-        
+
+
 
     addressParam:
       name: address-search
@@ -338,10 +338,10 @@ components:
       required: false
       description: |
         Full or partial address of the business or individual registered.
-        
+
         Each word in the address will be treated seperately, so a search for _Park Road_ will match _1 Park Road_,
         _1 High Road, West Park_, or _Park Estate, City Road_.
-        
+
         All words are treated as prefixes, so a search for _London_ will return addresses in _Londonderry_, but words that
         end with a number are an exception to this, so a search for _10_ will not match _100 Park Road_.
       schema:
@@ -1126,7 +1126,7 @@ components:
                 - description: >
                     As this register is a subset of the Waste Operations register, registrations
                     have an equivalent entry in that register
-            
+
 
     EndOfLifeVehiclesRegistrationDetail:
       allOf:
@@ -1923,7 +1923,7 @@ paths:
         - Waste Operations
       description: >
         Search the register of Environmental Permitting Regulations - Waste Operations
-        
+
         In addition to the registration number in the ePR these entries also have a Waste Management Licence number and
         search by number will match either of these fields.
       x-code-samples:
@@ -2073,7 +2073,7 @@ paths:
           required: false
           description: |
             URI of one of the Environment Agency areas as defined below
-            
+
             | Area                                                        | URI                                                                        |
             |-------------------------------------------------------------|----------------------------------------------------------------------------|
             | Cambridgeshire and Bedfordshire                             | http://environment.data.gov.uk/registry/def/ea-organization/ea_areas/1-1   |
@@ -2974,12 +2974,12 @@ paths:
                     localAuthority:
                       "@id": http://opendatacommunities.org/id/metropolitan-district-council/south-tyneside
                       label: South Tyneside
-                    notation: E4504-2017-20-18
+                    notation: 'E4504-2017-20-18'
                     regime: http://environment.data.gov.uk/public-register/def/regime/scrap-metal-dealer
                     register:
                       "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/register
                       label: Scrap Metal Dealer Licences for England
-                    registrationNumber: 2017-20-18
+                    registrationNumber: '2017-20-18'
                     registrationType:
                       "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/collector
                       label: Collector
@@ -3247,7 +3247,7 @@ paths:
                             - "@id": http://opendatacommunities.org/def/local-government/CivilAdministrativeAuthority
                             - "@id": http://opendatacommunities.org/def/local-government/LocalAuthority
                             - "@id": http://opendatacommunities.org/def/local-government/MetropolitanDistrictCouncil
-                        notation: E4504-2017-20-18
+                        notation: 'E4504-2017-20-18'
                         regime:
                           "@id": http://environment.data.gov.uk/public-register/def/regime/scrap-metal-dealer
                         register:
@@ -3255,7 +3255,7 @@ paths:
                           label: Scrap Metal Dealer Licences for England
                           type:
                             "@id": http://environment.data.gov.uk/public-register/def/registration/Register
-                        registrationNumber: 2017-20-18
+                        registrationNumber: '2017-20-18'
                         registrationType:
                           "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/collector
                           comment: TBD
@@ -3327,7 +3327,7 @@ paths:
           description: |
             URI that identifies the type of enforcement action taken. Valid only for the enforcement actions register.
             Multiple values will return all actions of either type.
-            
+
             | URI | Description |
             |-----|-------------|
             | http://environment.data.gov.uk/public-register/enforcement-action/def/action-type/caution | Caution |
@@ -3351,7 +3351,7 @@ paths:
           required: false
           description: |
             The function within the Environment Agency associated with an enforcement action
-            
+
             | URI | Description |
             |-----|-------------|
             | http://environment.data.gov.uk/public-register/enforcement-action/def/agency-function/em | EM |
@@ -3510,7 +3510,7 @@ paths:
           in: query
           description: |
             Code representing a specific type of exemption
-            
+
             | Code | Description |
             |------|-------------|
             | FRA2 | Electrical cable service crossing over a main river |
@@ -3938,7 +3938,7 @@ paths:
           description: |
             Partial registration number of to be matched with registratiosn across all registers.
             If the `infix` flag is not given, the response will include only numbers starting with the query string.
-            
+
             Just like with the `number-search` parameter on other endpoints, search terms ending with a numeral will be
             treated as exact matches instead of a prefix. Even with the use of `infix`, a search for `BC1` will not return
             `BC123`, though it will match `ABC1`.
@@ -3973,4 +3973,3 @@ paths:
                   value: ["CBDL1", "CBDL100", "CBDL1000", "CBDL100011", "CBDL100015"]
         '400':
           description: Bad request. Please check that at least one of the `name` or `number` parameters is given
-
