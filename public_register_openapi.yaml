@@ -2974,12 +2974,12 @@ paths:
                     localAuthority:
                       "@id": http://opendatacommunities.org/id/metropolitan-district-council/south-tyneside
                       label: South Tyneside
-                    notation: E4504-2017-20-18
+                    notation: 'E4504-2017-20-18'
                     regime: http://environment.data.gov.uk/public-register/def/regime/scrap-metal-dealer
                     register:
                       "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/register
                       label: Scrap Metal Dealer Licences for England
-                    registrationNumber: "2017-20-18"
+                    registrationNumber: '2017-20-18'
                     registrationType:
                       "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/collector
                       label: Collector
@@ -3247,7 +3247,7 @@ paths:
                             - "@id": http://opendatacommunities.org/def/local-government/CivilAdministrativeAuthority
                             - "@id": http://opendatacommunities.org/def/local-government/LocalAuthority
                             - "@id": http://opendatacommunities.org/def/local-government/MetropolitanDistrictCouncil
-                        notation: E4504-2017-20-18
+                        notation: 'E4504-2017-20-18'
                         regime:
                           "@id": http://environment.data.gov.uk/public-register/def/regime/scrap-metal-dealer
                         register:
@@ -3255,7 +3255,7 @@ paths:
                           label: Scrap Metal Dealer Licences for England
                           type:
                             "@id": http://environment.data.gov.uk/public-register/def/registration/Register
-                        registrationNumber: "2017-20-18"
+                        registrationNumber: '2017-20-18'
                         registrationType:
                           "@id": http://environment.data.gov.uk/public-register/scrap-metal-dealers/def/registration-type/collector
                           comment: TBD
