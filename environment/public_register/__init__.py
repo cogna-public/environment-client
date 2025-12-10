@@ -1,4 +1,5 @@
 from .client import PublicRegisterClient
+from .rate_limited_client import RateLimitedPublicRegisterClient
 from .models import (
     PublicRegisterModel,
     Metadata,
@@ -28,6 +29,7 @@ from .models import (
 
 __all__ = [
     "PublicRegisterClient",
+    "RateLimitedPublicRegisterClient",
     "PublicRegisterModel",
     "Metadata",
     "Register",
