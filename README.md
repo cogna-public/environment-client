@@ -158,16 +158,11 @@ This project uses `uv` for dependency management.
 
 **No manual steps required!** The workflow uses `uv version --bump patch` automatically.
 
-### Manual Releases (Minor/Major versions)
+### Minor and Major Releases
 
-For **minor** or **major** version bumps, run the Auto Version Bump workflow from `main`:
+For a **minor** or **major** release, put `[minor]` or `[major]` in the PR title, for example `Add hydrology readings endpoint [minor]`. The squash-merge commit takes the PR title, and the workflow bumps that part instead of the patch (0.5.x → 0.6.0, or 0.5.x → 1.0.0).
 
-```bash
-just release minor          # bump minor (0.5.x → 0.6.0)
-just release major "Notes"  # bump major (0.5.x → 1.0.0)
-```
-
-The recipe calls `gh workflow run`, so it needs the `gh` CLI authenticated (`gh auth status`). Nobody can push the bump commit or a `v*` tag by hand: the repository rules reserve both for the release app.
+Nobody can push a bump commit or a `v*` tag by hand: the repository rules reserve both for the release app.
 
 ### How It Works
 

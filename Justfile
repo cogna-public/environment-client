@@ -28,13 +28,3 @@ lint:
 
 format:
 	uv run ruff format .
-
-
-# Release from main by running the Auto Version Bump workflow. Only the release
-# app can push the bump commit and v* tags, so this can't run locally.
-# Usage examples:
-#   just release                 # bump patch
-#   just release minor           # bump minor
-#   just release major "Notes"   # bump major with notes
-release bump="patch" notes="":
-	gh workflow run auto-version.yml --repo cogna-public/environment-client --ref main -f bump={{bump}} -f notes="{{notes}}"
