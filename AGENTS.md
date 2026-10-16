@@ -17,7 +17,7 @@ Note on naming
 - Lint (fix): `just lint`
 - Format: `just format`
 - Example script: `just run-main`
-- Manual release (minor/major): `just release minor` or `just release major`
+- Manual release (minor/major): `just release minor` or `just release major` (runs the release workflow from `main`)
 - Note: Patch releases happen automatically on merge to main via GitHub Actions
 
 ## Coding Style & Naming Conventions
@@ -41,9 +41,9 @@ Note on naming
 
 ## Release & Versioning
 - **Automatic**: Patch versions bump automatically on every merge to main (0.5.11 → 0.5.12).
-- **Manual**: Use `just release minor` or `just release major` for larger version bumps.
-- **Workflow**: `.github/workflows/auto-version.yml` handles auto-bumping; `.github/workflows/publish.yml` publishes to PyPI.
-- **Important**: Don't manually edit version in `pyproject.toml`—always use `uv version --bump` or the Just recipe.
+- **Manual**: Use `just release minor` or `just release major` for larger version bumps; the recipe runs `auto-version.yml` on `main`.
+- **Workflow**: `.github/workflows/auto-version.yml` handles auto-bumping as the `cogna-package-releaser` app; `.github/workflows/publish.yml` publishes to PyPI.
+- **Important**: Don't edit the version in `pyproject.toml` by hand. Only the release app can push the bump commit and `v*` tags.
 - See `.github/workflows/README.md` for detailed workflow documentation.
 
 ## Security & Configuration Tips
