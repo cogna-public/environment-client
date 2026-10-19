@@ -148,15 +148,13 @@ This project uses `uv` for dependency management.
 
 ### Automatic Releases (Default)
 
-**Patch versions are released automatically!** Simply merge your PR to `main`:
+Every merge to `main` is released. Merge your PR and GitHub Actions:
 
-1. Merge PR to `main`
-2. GitHub Actions automatically:
-   - Bumps patch version (e.g., 0.5.11 → 0.5.12)
-   - Creates git tag and GitHub release
-   - Publishes to PyPI via Trusted Publishing
+1. Bumps the version: the patch (0.5.11 → 0.5.12), unless the PR title says `[minor]` or `[major]`
+2. Creates the git tag and GitHub release
+3. Publishes to PyPI via Trusted Publishing
 
-**No manual steps required!** The workflow uses `uv version --bump patch` automatically.
+There are no manual steps.
 
 ### Minor and Major Releases
 
