@@ -148,11 +148,12 @@ This project uses `uv` for dependency management.
 
 ### Automatic Releases (Default)
 
-Every merge to `main` is released. Merge your PR and GitHub Actions:
+Every merge to `main` is released once its tests pass. Merge your PR and GitHub Actions:
 
-1. Bumps the version: the patch (0.5.11 → 0.5.12), unless the PR title ends with `[minor]` or `[major]`
-2. Creates the git tag and GitHub release
-3. Publishes to PyPI via Trusted Publishing
+1. Runs the tests on the merge, and waits for them to pass
+2. Bumps the version: the patch (0.5.11 → 0.5.12), unless the PR title ends with `[minor]` or `[major]`
+3. Creates the git tag and GitHub release
+4. Publishes to PyPI via Trusted Publishing
 
 There are no manual steps. A merge that changes only `.github/`, such as a Dependabot action update, releases nothing; the next release includes it.
 
