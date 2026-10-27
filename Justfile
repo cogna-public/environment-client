@@ -28,21 +28,3 @@ lint:
 
 format:
 	uv run ruff format .
-
-
-# Create a release: bump version with uv, tag, push, and create GitHub Release
-# Usage examples:
-#   just release                 # bump patch
-#   just release minor           # bump minor
-#   just release major "Notes"   # bump major with notes
-release bump="patch" notes="":
-	uv version --bump {{bump}} && \
-	new_version=$(yq eval '.project.version' pyproject.toml) && \
-	echo "New version: ${new_version}" && \
-	git add pyproject.toml uv.lock && \
-	git commit -m "publish: bump to v${new_version}" || echo "No changes to commit" && \
-	git push origin main && \
-	git tag "v${new_version}" || echo "Tag already exists" && \
-	git push origin "v${new_version}" || echo "Tag push failed (may already exist)" && \
-	if [ -z "{{notes}}" ]; then rel_notes="Release v${new_version}"; else rel_notes="{{notes}}"; fi && \
-	gh release create "v${new_version}" --title "v${new_version}" --notes "${rel_notes}" --repo cogna-public/environment-client || echo "Release may already exist"

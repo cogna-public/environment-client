@@ -33,11 +33,11 @@ async def main():
         # Get flood warnings
         flood_warnings = await flood_client.get_flood_warnings()
         print(f"Found {len(flood_warnings)} flood warnings.")
-        
+
         # Search for waste operations registrations
         waste_operations = await public_register_client.get_waste_operations(limit=5)
         print(f"Found {len(waste_operations.items)} waste operations.")
-        
+
         # Search across all registers
         all_registrations = await public_register_client.search_all_registers(name_search="Limited", limit=5)
         print(f"Found {len(all_registrations.items)} registrations with 'Limited' in the name.")
@@ -148,57 +148,35 @@ This project uses `uv` for dependency management.
 
 ### Automatic Releases (Default)
 
-**Patch versions are released automatically!** Simply merge your PR to `main`:
+Every merge to `main` is released once its tests pass. Merge your PR and GitHub Actions:
 
-1. Merge PR to `main`
-2. GitHub Actions automatically:
-   - Bumps patch version (e.g., 0.5.11 → 0.5.12)
-   - Creates git tag and GitHub release
-   - Publishes to PyPI via Trusted Publishing
+1. Runs the tests on the merge, and waits for them to pass
+2. Bumps the version: the patch (0.5.11 → 0.5.12), unless the PR title ends with `[minor]` or `[major]`
+3. Creates the git tag and GitHub release
+4. Publishes to PyPI via Trusted Publishing
 
-**No manual steps required!** The workflow uses `uv version --bump patch` automatically.
+There are no manual steps. A merge that changes only `.github/`, such as a Dependabot action update, releases nothing; the next release includes it.
 
-### Manual Releases (Minor/Major versions)
+### Minor and Major Releases
 
-For **minor** or **major** version bumps, use the Justfile recipe:
+For a **minor** or **major** release, end the PR title with `[minor]` or `[major]`, for example `Add hydrology readings endpoint [minor]`. The squash-merge commit takes the PR title, and the workflow bumps that part instead of the patch (0.5.x → 0.6.0, or 0.5.x → 1.0.0).
 
-```bash
-just release minor          # bump minor (0.5.x → 0.6.0)
-just release major "Notes"  # bump major (0.5.x → 1.0.0)
-```
-
-**Requirements:**
-- `gh` CLI authenticated (`gh auth status`)
-- The recipe runs `uv version --bump`, commits changes, creates tag, and publishes
-
-**Alternatively, run manually:**
-
-```bash
-uv version --bump minor  # or major
-git add pyproject.toml uv.lock
-git commit -m "publish: bump to vX.Y.Z"
-git push origin main
-git tag vX.Y.Z && git push origin vX.Y.Z
-gh release create vX.Y.Z --title "vX.Y.Z" --notes "Release notes"
-```
+Nobody can push a bump commit or a `v*` tag by hand: the repository rules reserve both for the release app.
 
 ### How It Works
 
-- **Automatic workflow:** `.github/workflows/auto-version.yml` bumps patch on every merge to main
-- **Publishing workflow:** `.github/workflows/publish.yml` publishes to PyPI when releases are created
-- **Trusted Publishing:** Uses GitHub's OIDC for PyPI (no manual tokens)
+- **Automatic workflow:** `.github/workflows/auto-version.yml` bumps the version on every merge to main, then tags and releases as the `cogna-package-releaser` GitHub App
+- **Publishing workflow:** `.github/workflows/publish.yml` publishes to PyPI when a release is created
+- **Trusted Publishing:** PyPI accepts uploads only from `publish.yml` running in the `pypi` environment, which only `v*` tags can deploy to
 
-### Setup (First Time Only)
+### Setup
 
-To enable automatic PyPI publishing, you need a **Personal Access Token (PAT)**:
+The repository settings (rules and the `release` and `pypi` environments) are managed in Terraform in `cogna-co/terraform`. The `release` environment needs:
 
-1. Create a fine-grained PAT: GitHub Settings → Developer settings → Personal access tokens
-2. Grant it `Contents: Read and write` permission for this repository
-3. Add it as a repository secret named `PAT_TOKEN`
+- variable `RELEASE_APP_CLIENT_ID`: the app's client ID
+- secret `RELEASE_APP_PRIVATE_KEY`: a private key for the app
 
-**Why?** GitHub's default token doesn't trigger other workflows. The PAT allows the version bump to trigger PyPI publishing.
-
-**Without PAT:** Version bump still works, but you'll need to manually trigger the publish workflow.
+The app's token, unlike `GITHUB_TOKEN`, lets the release trigger `publish.yml`.
 
 **Links:**
 - PyPI project: https://pypi.org/project/environment-client/
