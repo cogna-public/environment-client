@@ -150,15 +150,15 @@ This project uses `uv` for dependency management.
 
 Every merge to `main` is released. Merge your PR and GitHub Actions:
 
-1. Bumps the version: the patch (0.5.11 → 0.5.12), unless the PR title says `[minor]` or `[major]`
+1. Bumps the version: the patch (0.5.11 → 0.5.12), unless the PR title ends with `[minor]` or `[major]`
 2. Creates the git tag and GitHub release
 3. Publishes to PyPI via Trusted Publishing
 
-There are no manual steps.
+There are no manual steps. A merge that changes only `.github/`, such as a Dependabot action update, releases nothing; the next release includes it.
 
 ### Minor and Major Releases
 
-For a **minor** or **major** release, put `[minor]` or `[major]` in the PR title, for example `Add hydrology readings endpoint [minor]`. The squash-merge commit takes the PR title, and the workflow bumps that part instead of the patch (0.5.x → 0.6.0, or 0.5.x → 1.0.0).
+For a **minor** or **major** release, end the PR title with `[minor]` or `[major]`, for example `Add hydrology readings endpoint [minor]`. The squash-merge commit takes the PR title, and the workflow bumps that part instead of the patch (0.5.x → 0.6.0, or 0.5.x → 1.0.0).
 
 Nobody can push a bump commit or a `v*` tag by hand: the repository rules reserve both for the release app.
 
